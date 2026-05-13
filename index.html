@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhyGolf Shipping Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f4f5;
+      color: #18181b;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #18181b;
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1  { font-size: 18px; font-weight: 600; }
+    header span { font-size: 12px; color: #71717a; }
+
+    /* ── Layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    /* ── Loading / Error ── */
+    #status {
+      text-align: center;
+      padding: 80px 20px;
+      color: #71717a;
+      font-size: 15px;
+    }
+    #status .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #e4e4e7;
+      border-top-color: #18181b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Summary cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .card .label { font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .card .value { font-size: 32px; font-weight: 700; }
+    .card .sub   { font-size: 12px; color: #71717a; margin-top: 4px; }
+
+    /* ── Section titles ── */
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e4e4e7;
+    }
+
+    /* ── Carrier grid ── */
+    .carriers {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .carrier-card {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .carrier-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .carrier-name  { font-size: 15px; font-weight: 600; }
+    .carrier-pct   { font-size: 22px; font-weight: 700; color: #18181b; }
+    .carrier-meta  { font-size: 12px; color: #71717a; margin-top: 2px; }
+
+    .bar-track {
+      height: 6px;
+      background: #f4f4f5;
+      border-radius: 99px;
+      margin: 12px 0 14px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .6s ease;
+    }
+
+    .services { list-style: none; }
+    .services li {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 5px 0;
+      border-bottom: 1px solid #f4f4f5;
+      color: #52525b;
+    }
+    .services li:last-child { border-bottom: none; }
+    .svc-pct { font-weight: 600; color: #18181b; }
+
+    /* ── Product table ── */
+    .table-wrap {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #71717a;
+      background: #fafafa;
+      border-bottom: 1px solid #e4e4e7;
+    }
+    tbody tr:hover { background: #fafafa; }
+    tbody td { padding: 11px 16px; border-bottom: 1px solid #f4f4f5; }
+    tbody tr:last-child td { border-bottom: none; }
+    .cost  { font-weight: 600; }
+    .muted { color: #71717a; }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      font-size: 12px;
+      color: #a1a1aa;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>WhyGolf Shipping Dashboard</h1>
+  <span id="generated">Loading...</span>
+</header>
+
+<main>
+  <div id="status">
+    <div class="spinner"></div>
+    Pulling data from ShipStation...
+  </div>
+
+  <div id="content" style="display:none">
+
+    <div class="cards">
+      <div class="card">
+        <div class="label">Total Shipments</div>
+        <div class="value" id="totalShipments">—</div>
+        <div class="sub" id="dateRange">Last 3 months</div>
+      </div>
+      <div class="card">
+        <div class="label">Carriers Used</div>
+        <div class="value" id="totalCarriers">—</div>
+        <div class="sub">FedEx · UPS · USPS</div>
+      </div>
+      <div class="card">
+        <div class="label">Products Tracked</div>
+        <div class="value" id="totalProducts">—</div>
+        <div class="sub">By avg shipping cost</div>
+      </div>
+    </div>
+
+    <h2>Carrier Breakdown</h2>
+    <div class="carriers" id="carriers"></div>
+
+    <h2>Average Shipping Cost by Product</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Product</th>
+            <th>Avg Shipping Cost</th>
+            <th>Shipments</th>
+          </tr>
+        </thead>
+        <tbody id="productTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+<footer id="footer"></footer>
+
+<script>
+  const COLORS = {
+    fedex:        '#4F46E5',
+    stamps_com:   '#0EA5E9',
+    usps:         '#0EA5E9',
+    ups:          '#D97706',
+    ups_walleted: '#B45309',
+    ups_wn:       '#92400E',
+  };
+
+  async function load() {
+    try {
+      const res  = await fetch('/api/analytics');
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      document.getElementById('totalShipments').textContent = data.totalShipments.toLocaleString();
+      document.getElementById('totalCarriers').textContent  = data.carrierBreakdown.length;
+      document.getElementById('totalProducts').textContent  = data.productBreakdown.length;
+      document.getElementById('dateRange').textContent      = data.dateRange;
+      document.getElementById('generated').textContent      =
+        'Updated ' + new Date(data.generatedAt).toLocaleTimeString();
+
+      const carriersEl = document.getElementById('carriers');
+      for (const c of data.carrierBreakdown) {
+        const color = COLORS[c.code] || '#18181b';
+        const svcs  = c.services.map(s => `
+          <li>
+            <span>${s.service}</span>
+            <span class="svc-pct">${s.pct}%
+              <span style="font-weight:400;color:#a1a1aa">(${s.count.toLocaleString()})</span>
+            </span>
+          </li>`).join('');
+
+        carriersEl.innerHTML += `
+          <div class="carrier-card">
+            <div class="carrier-header">
+              <div>
+                <div class="carrier-name">${c.label}</div>
+                <div class="carrier-meta">
+                  ${c.count.toLocaleString()} shipments &middot; avg $${c.avgCost}
+                </div>
+              </div>
+              <div class="carrier-pct">${c.pct}%</div>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${c.pct}%;background:${color}"></div>
+            </div>
+            <ul class="services">${svcs}</ul>
+          </div>`;
+      }
+
+      const tbody = document.getElementById('productTable');
+      data.productBreakdown.forEach((p, i) => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="muted">${i + 1}</td>
+            <td>${p.name}</td>
+            <td class="cost">$${p.avgCost}</td>
+            <td class="muted">${p.shipments.toLocaleString()}</td>
+          </tr>`;
+      });
+
+      document.getElementById('status').style.display  = 'none';
+      document.getElementById('content').style.display = 'block';
+      document.getElementById('footer').textContent    =
+        'Data from ShipStation · ' + data.dateRange;
+
+    } catch (err) {
+      document.getElementById('status').innerHTML = `
+        <p style="color:#ef4444;font-size:15px">⚠️ ${err.message}</p>
+        <p style="margin-top:10px;font-size:13px;color:#71717a">
+          Make sure the server is running:<br>
+          <code style="background:#f4f4f5;padding:4px 8px;border-radius:4px">node server.js</code>
+        </p>`;
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>
