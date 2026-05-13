@@ -220,7 +220,7 @@
 
   async function load() {
     try {
-      const res  = await fetch('/api/analytics');
+      const res  = await fetch('https://averywgp1-production.up.railway.app/api/analytics');
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
