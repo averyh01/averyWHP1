@@ -9,7 +9,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: '*' }));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
 app.use(express.static(path.join(__dirname)));   // serves index.html
 
 // ── ShipStation client ────────────────────────────────────────────────────────
