@@ -352,6 +352,8 @@
         'Updated ' + new Date(data.generatedAt).toLocaleTimeString();
 
       const carriersEl = document.getElementById('carriers');
+      carriersEl.innerHTML = '';
+      document.getElementById('productTable').innerHTML = '';
       for (const c of data.carrierBreakdown) {
         const color = COLORS[c.code] || '#18181b';
         const svcs  = c.services.map(s => `
