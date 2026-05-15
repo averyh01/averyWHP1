@@ -199,7 +199,7 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
 });
 
 // Temporary debug: show unique carrier field combinations
-app.get('/api/debug-carriers', requireAuth, async (req, res) => {
+app.get('/api/debug-carriers', async (req, res) => {
   try {
     const { data } = await ss.get('/shipments', {
       params: { shipDateStart: '2026-01-01', shipDateEnd: '2026-05-15', pageSize: 500, page: 1 }
