@@ -65,6 +65,10 @@ function carrierLabel(code) {
   return map[code] || code;
 }
 
+// ── Cache (30 min) ────────────────────────────────────────────────────────────
+let cache = { data: null, ts: 0 };
+const CACHE_MS = 30 * 60 * 1000; // 30 minutes
+
 // ── Fetch all shipments (last 3 months, all pages) ────────────────────────────
 async function fetchShipments() {
   const startDate = monthsAgo(3);
@@ -91,6 +95,11 @@ async function fetchShipments() {
 // ── Analytics endpoint ────────────────────────────────────────────────────────
 app.get('/api/analytics', requireAuth, async (req, res) => {
   try {
+    // Return cached data if fresh
+    if (cache.data && Date.now() - cache.ts < CACHE_MS) {
+      return res.json({ ...cache.data, cached: true });
+    }
+
     const shipments = await fetchShipments();
 
     const carriers   = {};   // { code: { count, totalCost, services: { code: count } } }
@@ -153,13 +162,16 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
       .sort((a, b) => b.shipments - a.shipments)
       .slice(0, 30);
 
-    res.json({
+    const result = {
       generatedAt:     new Date().toISOString(),
       dateRange:       `${monthsAgo(3)} → today`,
       totalShipments:  total,
       carrierBreakdown,
       productBreakdown
-    });
+    };
+
+    cache = { data: result, ts: Date.now() };
+    res.json(result);
 
   } catch (err) {
     console.error(err.response?.data || err.message);
