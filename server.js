@@ -198,16 +198,6 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
   }
 });
 
-// Temporary: list all carriers from ShipStation
-app.get('/api/carriers', requireAuth, async (req, res) => {
-  try {
-    const { data } = await ss.get('/carriers');
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n✅ Server running at http://localhost:${PORT}`);
