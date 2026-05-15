@@ -539,6 +539,10 @@
     document.getElementById('login-screen').style.display = 'flex';
   }
 
+  function formatService(code) {
+    return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
   const COLORS = {
     fedex:        '#4F46E5',
     stamps_com:   '#0EA5E9',
@@ -582,7 +586,7 @@
         const color = COLORS[c.code] || '#18181b';
         const svcs  = c.services.map(s => `
           <li>
-            <span>${s.service}</span>
+            <span>${formatService(s.service)}</span>
             <span class="svc-pct">${s.pct}%
               <span style="font-weight:400;color:#a1a1aa">(${s.count.toLocaleString()})</span>
             </span>
