@@ -423,6 +423,11 @@
   };
 
   async function load(attempt = 1) {
+    // Show loading state
+    document.getElementById('status').innerHTML = '<div class="spinner"></div>Loading data...';
+    document.getElementById('status').style.display  = 'block';
+    document.getElementById('content').style.display = 'none';
+
     try {
       const res  = await fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, {
         headers: { 'x-password': getPassword() }
