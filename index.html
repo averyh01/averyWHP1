@@ -455,6 +455,13 @@
         </svg>
         Products
       </button>
+      <button class="nav-item" id="nav-zones" onclick="switchTab('zones')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+        Zones
+      </button>
     </nav>
 
     <!-- Main content -->
@@ -506,6 +513,16 @@
           <div class="carriers" id="carriers"></div>
         </div>
 
+        <!-- ── Zones tab ── -->
+        <div id="view-zones" style="display:none">
+          <h2>Shipping Zones</h2>
+          <div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:48px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:16px">🗺️</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:8px">Coming Soon</div>
+            <div style="font-size:13px;color:#71717a">Connect Shopify to unlock zone-level shipping analysis.</div>
+          </div>
+        </div>
+
         <!-- ── Products tab ── -->
         <div id="view-products" style="display:none">
           <h2>Product Shipping Costs</h2>
@@ -554,8 +571,10 @@
     activeTab = tab;
     document.getElementById('view-carriers').style.display = tab === 'carriers' ? 'block' : 'none';
     document.getElementById('view-products').style.display = tab === 'products' ? 'block' : 'none';
+    document.getElementById('view-zones').style.display    = tab === 'zones'    ? 'block' : 'none';
     document.getElementById('nav-carriers').classList.toggle('active', tab === 'carriers');
     document.getElementById('nav-products').classList.toggle('active', tab === 'products');
+    document.getElementById('nav-zones').classList.toggle('active',    tab === 'zones');
   }
 
   // ── Date helpers ──────────────────────────────────────────────────────────
