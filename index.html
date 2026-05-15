@@ -126,7 +126,7 @@
     /* ── Carrier grid ── */
     .carriers {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 16px;
       margin-bottom: 40px;
     }
@@ -454,7 +454,7 @@
       const carriersEl = document.getElementById('carriers');
       carriersEl.innerHTML = '';
       document.getElementById('productTable').innerHTML = '';
-      for (const c of data.carrierBreakdown) {
+      for (const c of data.carrierBreakdown.filter(c => c.code !== 'fedex_walleted')) {
         const color = COLORS[c.code] || '#18181b';
         const svcs  = c.services.map(s => `
           <li>
