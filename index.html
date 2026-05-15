@@ -11,19 +11,9 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #f4f4f5;
       color: #18181b;
+      height: 100vh;
+      overflow: hidden;
     }
-
-    /* ── Header ── */
-    header {
-      background: #18181b;
-      color: #fff;
-      padding: 18px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    header h1  { font-size: 18px; font-weight: 600; }
-    header span { font-size: 12px; color: #71717a; }
 
     /* ── Login screen ── */
     #login-screen {
@@ -77,8 +67,79 @@
       min-height: 20px;
     }
 
-    /* ── Layout ── */
-    main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+    /* ── App shell ── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #18181b;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    header h1  { font-size: 17px; font-weight: 600; }
+    header span { font-size: 12px; color: #71717a; }
+
+    /* ── Body: sidebar + content ── */
+    .app-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: #27272a;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 12px;
+      gap: 4px;
+    }
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #52525b;
+      padding: 0 10px;
+      margin-bottom: 6px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #a1a1aa;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      transition: background .15s, color .15s;
+    }
+    .nav-item:hover { background: #3f3f46; color: #fff; }
+    .nav-item.active { background: #3f3f46; color: #fff; }
+    .nav-item svg { flex-shrink: 0; opacity: .7; }
+    .nav-item.active svg { opacity: 1; }
+
+    /* ── Main content area ── */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px;
+    }
 
     /* ── Loading / Error ── */
     #status {
@@ -97,28 +158,71 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Date filter ── */
+    .date-filter {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .date-filter label { font-size: 13px; font-weight: 600; color: #52525b; margin-right: 4px; }
+    .preset-btn {
+      padding: 5px 13px;
+      border-radius: 99px;
+      border: 1px solid #e4e4e7;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      color: #52525b;
+    }
+    .preset-btn:hover, .preset-btn.active { background: #18181b; color: #fff; border-color: #18181b; }
+    .date-inputs { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
+    .date-inputs input {
+      padding: 5px 10px;
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #18181b;
+    }
+    .apply-btn {
+      padding: 5px 14px;
+      background: #18181b;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .apply-btn:hover { background: #3f3f46; }
+
     /* ── Summary cards ── */
     .cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 16px;
-      margin-bottom: 32px;
+      margin-bottom: 28px;
     }
     .card {
       background: #fff;
       border: 1px solid #e4e4e7;
       border-radius: 12px;
-      padding: 24px;
+      padding: 22px;
     }
     .card .label { font-size: 12px; color: #71717a; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
-    .card .value { font-size: 32px; font-weight: 700; }
+    .card .value { font-size: 30px; font-weight: 700; }
     .card .sub   { font-size: 12px; color: #71717a; margin-top: 4px; }
 
     /* ── Section titles ── */
     h2 {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       padding-bottom: 10px;
       border-bottom: 1px solid #e4e4e7;
     }
@@ -128,7 +232,7 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 16px;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
     }
     .carrier-card {
       background: #fff;
@@ -195,53 +299,22 @@
     tbody tr:last-child td { border-bottom: none; }
     .cost  { font-weight: 600; }
     .muted { color: #71717a; }
-
-    /* ── Date filter ── */
-    .date-filter {
-      background: #fff;
-      border: 1px solid #e4e4e7;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 28px;
-      display: flex;
+    .shopify-pill {
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .date-filter label { font-size: 13px; font-weight: 600; color: #52525b; margin-right: 4px; }
-    .preset-btn {
-      padding: 6px 14px;
+      gap: 5px;
+      font-size: 11px;
+      background: #f4f4f5;
+      color: #71717a;
+      padding: 3px 9px;
       border-radius: 99px;
       border: 1px solid #e4e4e7;
-      background: #fff;
-      font-size: 13px;
-      cursor: pointer;
-      color: #52525b;
+      cursor: default;
     }
-    .preset-btn:hover, .preset-btn.active { background: #18181b; color: #fff; border-color: #18181b; }
-    .date-inputs { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
-    .date-inputs input {
-      padding: 6px 10px;
-      border: 1px solid #e4e4e7;
-      border-radius: 8px;
-      font-size: 13px;
-      color: #18181b;
-    }
-    .apply-btn {
-      padding: 6px 16px;
-      background: #18181b;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .apply-btn:hover { background: #3f3f46; }
 
     footer {
       text-align: center;
-      padding: 32px;
+      padding: 24px;
       font-size: 12px;
       color: #a1a1aa;
     }
@@ -261,79 +334,125 @@
 </div>
 
 <div id="app" style="display:none">
-<header>
-  <h1>WhyGolf Shipping Dashboard</h1>
-  <span id="generated">Loading...</span>
-</header>
 
-<main>
-  <div id="status">
-    <div class="spinner"></div>
-    Pulling data from ShipStation...
-  </div>
+  <header>
+    <h1>WhyGolf Shipping Dashboard</h1>
+    <span id="generated">Loading...</span>
+  </header>
 
-  <div id="content" style="display:none">
+  <div class="app-body">
 
-    <!-- Date Filter -->
-    <div class="date-filter">
-      <label>Date Range:</label>
-      <button class="preset-btn" onclick="applyPreset(30, this)">30 days</button>
-      <button class="preset-btn active" onclick="applyPreset(90, this)">90 days</button>
-      <button class="preset-btn" onclick="applyPreset(180, this)">6 months</button>
-      <button class="preset-btn" onclick="applyPreset(365, this)">12 months</button>
-      <div class="date-inputs">
-        <span style="font-size:13px;color:#71717a">or custom:</span>
-        <input type="date" id="start-date" />
-        <span style="font-size:13px;color:#71717a">→</span>
-        <input type="date" id="end-date" />
-        <button class="apply-btn" onclick="applyCustom()">Apply</button>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-label">Navigation</div>
+      <button class="nav-item active" id="nav-carriers" onclick="switchTab('carriers')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+        Carriers
+      </button>
+      <button class="nav-item" id="nav-products" onclick="switchTab('products')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        Products
+      </button>
+    </nav>
+
+    <!-- Main content -->
+    <div class="content-area">
+
+      <div id="status">
+        <div class="spinner"></div>
+        Pulling data from ShipStation...
       </div>
-    </div>
 
-    <div class="cards">
-      <div class="card">
-        <div class="label">Total Shipments</div>
-        <div class="value" id="totalShipments">—</div>
-        <div class="sub" id="dateRange">Last 3 months</div>
-      </div>
-      <div class="card">
-        <div class="label">Carriers Used</div>
-        <div class="value" id="totalCarriers">—</div>
-        <div class="sub">FedEx · UPS · USPS</div>
-      </div>
-      <div class="card">
-        <div class="label">Products Tracked</div>
-        <div class="value" id="totalProducts">—</div>
-        <div class="sub">By avg shipping cost</div>
-      </div>
-    </div>
+      <div id="content" style="display:none">
 
-    <h2>Carrier Breakdown</h2>
-    <div class="carriers" id="carriers"></div>
+        <!-- Date Filter (shared) -->
+        <div class="date-filter">
+          <label>Date Range:</label>
+          <button class="preset-btn" onclick="applyPreset(30, this)">30 days</button>
+          <button class="preset-btn active" onclick="applyPreset(90, this)">90 days</button>
+          <button class="preset-btn" onclick="applyPreset(180, this)">6 months</button>
+          <button class="preset-btn" onclick="applyPreset(365, this)">12 months</button>
+          <div class="date-inputs">
+            <span style="font-size:13px;color:#71717a">or custom:</span>
+            <input type="date" id="start-date" />
+            <span style="font-size:13px;color:#71717a">→</span>
+            <input type="date" id="end-date" />
+            <button class="apply-btn" onclick="applyCustom()">Apply</button>
+          </div>
+        </div>
 
-    <h2>Average Shipping Cost by Product</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Product</th>
-            <th>Avg Shipping Cost</th>
-            <th>Shipments</th>
-          </tr>
-        </thead>
-        <tbody id="productTable"></tbody>
-      </table>
-    </div>
+        <!-- Summary cards (shared) -->
+        <div class="cards">
+          <div class="card">
+            <div class="label">Total Shipments</div>
+            <div class="value" id="totalShipments">—</div>
+            <div class="sub" id="dateRange">Last 3 months</div>
+          </div>
+          <div class="card">
+            <div class="label">Carriers Used</div>
+            <div class="value" id="totalCarriers">—</div>
+            <div class="sub">FedEx · UPS · USPS</div>
+          </div>
+          <div class="card">
+            <div class="label">Products Tracked</div>
+            <div class="value" id="totalProducts">—</div>
+            <div class="sub">By avg shipping cost</div>
+          </div>
+        </div>
 
-  </div>
-</main>
+        <!-- ── Carriers tab ── -->
+        <div id="view-carriers">
+          <h2>Carrier Breakdown</h2>
+          <div class="carriers" id="carriers"></div>
+        </div>
 
-<footer id="footer"></footer>
-</div> <!-- end #app -->
+        <!-- ── Products tab ── -->
+        <div id="view-products" style="display:none">
+          <h2>Product Shipping Costs</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Product</th>
+                  <th>Avg Rate Paid</th>
+                  <th>Avg Rate Charged</th>
+                  <th>Shipments</th>
+                </tr>
+              </thead>
+              <tbody id="productTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- end #content -->
+
+      <footer id="footer"></footer>
+    </div><!-- end content-area -->
+
+  </div><!-- end app-body -->
+
+</div><!-- end #app -->
 
 <script>
   const API = 'https://averywgp1-production.up.railway.app';
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  let activeTab = 'carriers';
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('view-carriers').style.display = tab === 'carriers' ? 'block' : 'none';
+    document.getElementById('view-products').style.display = tab === 'products' ? 'block' : 'none';
+    document.getElementById('nav-carriers').classList.toggle('active', tab === 'carriers');
+    document.getElementById('nav-products').classList.toggle('active', tab === 'products');
+  }
 
   // ── Date helpers ──────────────────────────────────────────────────────────
   function today() { return new Date().toISOString().split('T')[0]; }
@@ -346,7 +465,6 @@
   let currentStart = daysAgo(90);
   let currentEnd   = today();
 
-  // Set default date inputs
   function initDateInputs() {
     document.getElementById('start-date').value = currentStart;
     document.getElementById('end-date').value   = currentEnd;
@@ -395,13 +513,13 @@
     }
   }
 
-  // Allow Enter key on password field
   document.getElementById('password-input')
     .addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 
   function showApp() {
     document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('app').style.flexDirection = 'column';
     initDateInputs();
     load();
   }
@@ -423,17 +541,15 @@
   };
 
   async function load(attempt = 1) {
-    // Show loading state
     document.getElementById('status').innerHTML = '<div class="spinner"></div>Loading data...';
     document.getElementById('status').style.display  = 'block';
     document.getElementById('content').style.display = 'none';
 
     try {
-      const res  = await fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, {
+      const res = await fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, {
         headers: { 'x-password': getPassword() }
       });
 
-      // If rate limited, wait and retry up to 3 times
       if (res.status === 429 && attempt <= 3) {
         document.getElementById('status').innerHTML =
           '<div class="spinner"></div>Rate limit hit — retrying in 3 seconds...';
@@ -451,9 +567,9 @@
       document.getElementById('generated').textContent      =
         'Updated ' + new Date(data.generatedAt).toLocaleTimeString();
 
+      // ── Render carriers ──
       const carriersEl = document.getElementById('carriers');
       carriersEl.innerHTML = '';
-      document.getElementById('productTable').innerHTML = '';
       for (const c of data.carrierBreakdown.filter(c => c.code !== 'fedex_walleted')) {
         const color = COLORS[c.code] || '#18181b';
         const svcs  = c.services.map(s => `
@@ -482,13 +598,16 @@
           </div>`;
       }
 
+      // ── Render products ──
       const tbody = document.getElementById('productTable');
+      tbody.innerHTML = '';
       data.productBreakdown.forEach((p, i) => {
         tbody.innerHTML += `
           <tr>
             <td class="muted">${i + 1}</td>
             <td>${p.name}</td>
             <td class="cost">$${p.avgCost}</td>
+            <td><span class="shopify-pill">🔗 Connect Shopify</span></td>
             <td class="muted">${p.shipments.toLocaleString()}</td>
           </tr>`;
       });
@@ -502,8 +621,7 @@
       document.getElementById('status').innerHTML = `
         <p style="color:#ef4444;font-size:15px">⚠️ ${err.message}</p>
         <p style="margin-top:10px;font-size:13px;color:#71717a">
-          Make sure the server is running:<br>
-          <code style="background:#f4f4f5;padding:4px 8px;border-radius:4px">node server.js</code>
+          Make sure the server is running.<br>
         </p>`;
     }
   }
