@@ -12,10 +12,29 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-password');
   next();
 });
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));   // serves index.html
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+const PASSWORD = process.env.DASHBOARD_PASSWORD || 'golf';
+
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password === PASSWORD) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false, error: 'Wrong password' });
+  }
+});
+
+function requireAuth(req, res, next) {
+  const pw = req.headers['x-password'];
+  if (pw === PASSWORD) return next();
+  res.status(401).json({ error: 'Unauthorized' });
+}
 
 // ── ShipStation client ────────────────────────────────────────────────────────
 const SS_AUTH = Buffer.from(
@@ -70,7 +89,7 @@ async function fetchShipments() {
 }
 
 // ── Analytics endpoint ────────────────────────────────────────────────────────
-app.get('/api/analytics', async (req, res) => {
+app.get('/api/analytics', requireAuth, async (req, res) => {
   try {
     const shipments = await fetchShipments();
 
