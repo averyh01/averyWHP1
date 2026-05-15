@@ -158,6 +158,7 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
         dimWeightLbs: 0, dimWeightCount: 0,
         billableWeightLbs: 0, billableCount: 0,
         dimL: 0, dimW: 0, dimH: 0, dimCount: 0,
+        dimGroups: {},
       };
       carriers[c].count++;
       carriers[c].totalCost += cost;
@@ -179,6 +180,9 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
         carriers[c].dimW += dims.width;
         carriers[c].dimH += dims.height;
         carriers[c].dimCount++;
+        // Group by rounded dimensions
+        const key = `${Math.round(dims.length)}x${Math.round(dims.width)}x${Math.round(dims.height)}`;
+        carriers[c].dimGroups[key] = (carriers[c].dimGroups[key] || 0) + 1;
       }
       if (dimWt !== null) {
         carriers[c].dimWeightLbs   += dimWt;
@@ -229,6 +233,13 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
           dimDivisor:        divisor,
           avgDimensions:     avgL ? { l: avgL, w: avgW, h: avgH } : null,
           dimCoverage:       d.dimCount ? +((d.dimCount / d.count) * 100).toFixed(0) : 0,
+          topDimensions:     Object.entries(d.dimGroups)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([key, cnt]) => {
+              const [l, w, h] = key.split('x').map(Number);
+              return { dims: `${l}" × ${w}" × ${h}"`, count: cnt, pct: +((cnt / d.dimCount) * 100).toFixed(1) };
+            }),
           services:          Object.entries(d.services)
             .sort((a, b) => b[1] - a[1])
             .map(([svc, cnt]) => ({
