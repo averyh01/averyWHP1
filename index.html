@@ -327,11 +327,20 @@
     ups_wn:       '#92400E',
   };
 
-  async function load() {
+  async function load(attempt = 1) {
     try {
       const res  = await fetch(`${API}/api/analytics`, {
         headers: { 'x-password': getPassword() }
       });
+
+      // If rate limited, wait and retry up to 3 times
+      if (res.status === 429 && attempt <= 3) {
+        document.getElementById('status').innerHTML =
+          '<div class="spinner"></div>Rate limit hit — retrying in 3 seconds...';
+        await new Promise(r => setTimeout(r, 3000));
+        return load(attempt + 1);
+      }
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
