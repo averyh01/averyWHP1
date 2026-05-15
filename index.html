@@ -727,7 +727,6 @@
       if (data.error) throw new Error(data.error);
 
       document.getElementById('totalShipments').textContent = data.totalShipments.toLocaleString();
-      document.getElementById('totalCarriers').textContent  = data.carrierBreakdown.length;
       document.getElementById('totalProducts').textContent  = data.productBreakdown.length;
       document.getElementById('dateRange').textContent      = data.dateRange;
       document.getElementById('generated').textContent      =
