@@ -121,27 +121,74 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
 
     const shipments = await fetchShipments(startDate, endDate);
 
-    const carriers   = {};   // { code: { count, totalCost, services, weightOz, dimL, dimW, dimH, dimCount } }
-    const products   = {};   // { name: { totalCost, count } }
+    const carriers   = {};
+    const products   = {};
+
+    // Services that charge dim weight on ALL packages (no size threshold)
+    const AIR_SERVICES = new Set([
+      'fedex_2day', 'fedex_2day_am', 'fedex_express_saver',
+      'fedex_first_overnight', 'fedex_priority_overnight', 'fedex_standard_overnight',
+      'fedex_international_priority', 'fedex_international_economy',
+      'ups_next_day_air', 'ups_next_day_air_saver', 'ups_next_day_air_early_am',
+      'ups_2nd_day_air', 'ups_2nd_day_air_am', 'ups_3_day_select',
+    ]);
+
+    // Dim divisor by carrier
+    function dimDivisor(carrierCode) {
+      return (carrierCode === 'stamps_com' || carrierCode === 'usps') ? 166 : 139;
+    }
+
+    // Compute dimensional weight for a shipment (returns null if not applicable)
+    function calcDimWeight(carrierCode, serviceCode, dims) {
+      if (!dims?.length || !dims?.width || !dims?.height) return null;
+      const cuIn = dims.length * dims.width * dims.height;
+      const isAir = AIR_SERVICES.has(serviceCode);
+      if (!isAir && cuIn <= 1728) return null; // ground threshold: 1 cu ft
+      return cuIn / dimDivisor(carrierCode);
+    }
 
     for (const s of shipments) {
       const c    = s.carrierCode  || 'unknown';
       const svc  = s.serviceCode  || 'unknown';
       const cost = s.shipmentCost || 0;
 
-      // ── carrier / service rollup ──
-      if (!carriers[c]) carriers[c] = { count: 0, totalCost: 0, services: {}, weightOz: 0, dimL: 0, dimW: 0, dimH: 0, dimCount: 0 };
+      if (!carriers[c]) carriers[c] = {
+        count: 0, totalCost: 0, services: {},
+        actualWeightOz: 0, weightCount: 0,
+        dimWeightLbs: 0, dimWeightCount: 0,
+        billableWeightLbs: 0, billableCount: 0,
+        dimL: 0, dimW: 0, dimH: 0, dimCount: 0,
+      };
       carriers[c].count++;
       carriers[c].totalCost += cost;
       carriers[c].services[svc] = (carriers[c].services[svc] || 0) + 1;
 
-      // ── weight / dimensions rollup ──
-      if (s.weight?.value) carriers[c].weightOz += s.weight.value;
-      if (s.dimensions?.length && s.dimensions?.width && s.dimensions?.height) {
-        carriers[c].dimL += s.dimensions.length;
-        carriers[c].dimW += s.dimensions.width;
-        carriers[c].dimH += s.dimensions.height;
+      // ── weight rollup ──
+      const actualOz  = s.weight?.value || 0;
+      const actualLbs = actualOz / 16;
+      if (actualOz) {
+        carriers[c].actualWeightOz += actualOz;
+        carriers[c].weightCount++;
+      }
+
+      // ── dimensional weight rollup ──
+      const dims    = s.dimensions;
+      const dimWt   = calcDimWeight(c, svc, dims);
+      if (dims?.length && dims?.width && dims?.height) {
+        carriers[c].dimL += dims.length;
+        carriers[c].dimW += dims.width;
+        carriers[c].dimH += dims.height;
         carriers[c].dimCount++;
+      }
+      if (dimWt !== null) {
+        carriers[c].dimWeightLbs   += dimWt;
+        carriers[c].dimWeightCount++;
+        // billable = max(actual, dim)
+        carriers[c].billableWeightLbs += Math.max(actualLbs, dimWt);
+        carriers[c].billableCount++;
+      } else if (actualOz) {
+        carriers[c].billableWeightLbs += actualLbs;
+        carriers[c].billableCount++;
       }
 
       // ── product rollup ──
@@ -167,20 +214,22 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
         const avgL = d.dimCount ? +(d.dimL / d.dimCount).toFixed(1) : null;
         const avgW = d.dimCount ? +(d.dimW / d.dimCount).toFixed(1) : null;
         const avgH = d.dimCount ? +(d.dimH / d.dimCount).toFixed(1) : null;
-        const avgDimWeight = (avgL && avgW && avgH) ? +((avgL * avgW * avgH) / 139).toFixed(1) : null;
-        const avgWeightLbs = d.count ? +((d.weightOz / d.count) / 16).toFixed(2) : null;
+        const divisor = dimDivisor(code);
         return {
           code,
-          label:        carrierLabel(code),
-          count:        d.count,
-          pct:          +((d.count / total) * 100).toFixed(1),
-          avgCost:      +(d.totalCost / d.count).toFixed(2),
-          totalCost:    +d.totalCost.toFixed(2),
-          avgWeightLbs,
-          avgDimensions: avgL ? { l: avgL, w: avgW, h: avgH } : null,
-          avgDimWeight,
-          dimCoverage:  d.dimCount ? +((d.dimCount / d.count) * 100).toFixed(0) : 0,
-          services:     Object.entries(d.services)
+          label:             carrierLabel(code),
+          count:             d.count,
+          pct:               +((d.count / total) * 100).toFixed(1),
+          avgCost:           +(d.totalCost / d.count).toFixed(2),
+          totalCost:         +d.totalCost.toFixed(2),
+          avgActualWeight:   d.weightCount   ? +((d.actualWeightOz / d.weightCount) / 16).toFixed(2) : null,
+          avgDimWeight:      d.dimWeightCount ? +(d.dimWeightLbs / d.dimWeightCount).toFixed(2) : null,
+          avgBillableWeight: d.billableCount  ? +(d.billableWeightLbs / d.billableCount).toFixed(2) : null,
+          dimAppliesPct:     d.dimCount       ? +((d.dimWeightCount / d.dimCount) * 100).toFixed(0) : 0,
+          dimDivisor:        divisor,
+          avgDimensions:     avgL ? { l: avgL, w: avgW, h: avgH } : null,
+          dimCoverage:       d.dimCount ? +((d.dimCount / d.count) * 100).toFixed(0) : 0,
+          services:          Object.entries(d.services)
             .sort((a, b) => b[1] - a[1])
             .map(([svc, cnt]) => ({
               service: svc,

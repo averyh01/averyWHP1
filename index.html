@@ -746,10 +746,11 @@
 
     document.getElementById('drawer-title').textContent = c.label;
 
-    const dim = c.avgDimensions;
-    const dimStr = dim ? `${dim.l}" × ${dim.w}" × ${dim.h}"` : '—';
-    const dimWt  = c.avgDimWeight ? `${c.avgDimWeight} lbs` : '—';
-    const actWt  = c.avgWeightLbs ? `${c.avgWeightLbs} lbs` : '—';
+    const dim     = c.avgDimensions;
+    const dimStr  = dim ? `${dim.l}" × ${dim.w}" × ${dim.h}"` : '—';
+    const dimWt   = c.avgDimWeight      ? `${c.avgDimWeight} lbs`      : '—';
+    const actWt   = c.avgActualWeight   ? `${c.avgActualWeight} lbs`   : '—';
+    const billWt  = c.avgBillableWeight ? `${c.avgBillableWeight} lbs` : '—';
 
     const serviceRows = c.services.map(s => `
       <li>
@@ -793,7 +794,12 @@
           <div class="stat-box">
             <div class="s-label">Dim Weight</div>
             <div class="s-value">${dimWt}</div>
-            <div class="s-sub">L×W×H ÷ 139</div>
+            <div class="s-sub">÷${c.dimDivisor} · ${c.dimAppliesPct}% of packages</div>
+          </div>
+          <div class="stat-box" style="grid-column:span 2">
+            <div class="s-label">Avg Billable Weight</div>
+            <div class="s-value">${billWt}</div>
+            <div class="s-sub">max(actual, dim) per shipment</div>
           </div>
           <div class="stat-box" style="grid-column:span 2">
             <div class="s-label">Avg Dimensions</div>
