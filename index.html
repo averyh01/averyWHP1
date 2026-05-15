@@ -482,6 +482,12 @@
         </svg>
         Zones
       </button>
+      <button class="nav-item" id="nav-selections" onclick="switchTab('selections')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Selection Analysis
+      </button>
     </nav>
 
     <!-- Main content -->
@@ -526,6 +532,16 @@
         <div id="view-carriers">
           <h2>Carrier Breakdown</h2>
           <div class="carriers" id="carriers"></div>
+        </div>
+
+        <!-- ── Selection Analysis tab ── -->
+        <div id="view-selections" style="display:none">
+          <h2>Selection Analysis</h2>
+          <div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:48px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:16px">📊</div>
+            <div style="font-size:15px;font-weight:600;margin-bottom:8px">Coming Soon</div>
+            <div style="font-size:13px;color:#71717a">Selection analysis is on the way.</div>
+          </div>
         </div>
 
         <!-- ── Zones tab ── -->
@@ -608,12 +624,14 @@
 
   function switchTab(tab) {
     activeTab = tab;
-    document.getElementById('view-carriers').style.display = tab === 'carriers' ? 'block' : 'none';
-    document.getElementById('view-products').style.display = tab === 'products' ? 'block' : 'none';
-    document.getElementById('view-zones').style.display    = tab === 'zones'    ? 'block' : 'none';
-    document.getElementById('nav-carriers').classList.toggle('active', tab === 'carriers');
-    document.getElementById('nav-products').classList.toggle('active', tab === 'products');
-    document.getElementById('nav-zones').classList.toggle('active',    tab === 'zones');
+    document.getElementById('view-carriers').style.display   = tab === 'carriers'   ? 'block' : 'none';
+    document.getElementById('view-products').style.display   = tab === 'products'   ? 'block' : 'none';
+    document.getElementById('view-zones').style.display      = tab === 'zones'      ? 'block' : 'none';
+    document.getElementById('view-selections').style.display = tab === 'selections' ? 'block' : 'none';
+    document.getElementById('nav-carriers').classList.toggle('active',   tab === 'carriers');
+    document.getElementById('nav-products').classList.toggle('active',   tab === 'products');
+    document.getElementById('nav-zones').classList.toggle('active',      tab === 'zones');
+    document.getElementById('nav-selections').classList.toggle('active', tab === 'selections');
   }
 
   // ── Date helpers ──────────────────────────────────────────────────────────
