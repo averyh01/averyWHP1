@@ -55,12 +55,12 @@ function monthsAgo(n) {
 
 function carrierLabel(code) {
   const map = {
-    fedex:       'FedEx',
-    stamps_com:  'USPS (Stamps)',
-    usps:        'USPS',
-    ups:         'UPS',
-    ups_walleted:'UPS (Account 2)',
-    ups_wn:      'UPS (Account 3)',
+    fedex:        'FedEx',
+    stamps_com:   'USPS',
+    usps:         'USPS',
+    ups:          'UPS (ShipStation)',
+    ups_walleted: 'UPS (WhyGolf)',
+    ups_wn:       'UPS (Unishippers)',
   };
   return map[code] || code;
 }
