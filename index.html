@@ -277,7 +277,7 @@
   const API = 'https://averywgp1-production.up.railway.app';
 
   // ── Auth ──────────────────────────────────────────────────────────────────
-  function getPassword() { return sessionStorage.getItem('wgp_pw'); }
+  function getPassword() { return localStorage.getItem('wgp_pw'); }
 
   async function login() {
     const pw = document.getElementById('password-input').value;
@@ -290,7 +290,7 @@
         body: JSON.stringify({ password: pw })
       });
       if (res.ok) {
-        sessionStorage.setItem('wgp_pw', pw);
+        localStorage.setItem('wgp_pw', pw);
         showApp();
       } else {
         err.textContent = 'Wrong password. Try again.';
