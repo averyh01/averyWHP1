@@ -65,18 +65,17 @@ function carrierLabel(code) {
   return map[code] || code;
 }
 
-// ── Cache (30 min) ────────────────────────────────────────────────────────────
-let cache = { data: null, ts: 0 };
-const CACHE_MS = 30 * 60 * 1000; // 30 minutes
+// ── Cache (30 min, keyed by date range) ──────────────────────────────────────
+const cache = {};
+const CACHE_MS = 30 * 60 * 1000;
 
-// ── Fetch all shipments (last 3 months, all pages) ────────────────────────────
-async function fetchShipments() {
-  const startDate = monthsAgo(3);
+// ── Fetch all shipments for a date range ──────────────────────────────────────
+async function fetchShipments(startDate, endDate) {
   let page = 1, all = [];
 
   while (true) {
     const { data } = await ss.get('/shipments', {
-      params: { shipDateStart: startDate, pageSize: 500, page }
+      params: { shipDateStart: startDate, shipDateEnd: endDate, pageSize: 500, page }
     });
 
     const valid = (data.shipments || []).filter(s => !s.voided && s.shipmentCost > 0);
@@ -96,11 +95,15 @@ async function fetchShipments() {
 app.get('/api/analytics', requireAuth, async (req, res) => {
   try {
     // Return cached data if fresh
-    if (cache.data && Date.now() - cache.ts < CACHE_MS) {
-      return res.json({ ...cache.data, cached: true });
+    const startDate = req.query.start || monthsAgo(3);
+    const endDate   = req.query.end   || new Date().toISOString().split('T')[0];
+    const cacheKey  = `${startDate}_${endDate}`;
+
+    if (cache[cacheKey] && Date.now() - cache[cacheKey].ts < CACHE_MS) {
+      return res.json({ ...cache[cacheKey].data, cached: true });
     }
 
-    const shipments = await fetchShipments();
+    const shipments = await fetchShipments(startDate, endDate);
 
     const carriers   = {};   // { code: { count, totalCost, services: { code: count } } }
     const products   = {};   // { name: { totalCost, count } }
@@ -164,13 +167,13 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
 
     const result = {
       generatedAt:     new Date().toISOString(),
-      dateRange:       `${monthsAgo(3)} → today`,
+      dateRange:       `${startDate} → ${endDate}`,
       totalShipments:  total,
       carrierBreakdown,
       productBreakdown
     };
 
-    cache = { data: result, ts: Date.now() };
+    cache[cacheKey] = { data: result, ts: Date.now() };
     res.json(result);
 
   } catch (err) {

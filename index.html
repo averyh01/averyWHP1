@@ -196,6 +196,49 @@
     .cost  { font-weight: 600; }
     .muted { color: #71717a; }
 
+    /* ── Date filter ── */
+    .date-filter {
+      background: #fff;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .date-filter label { font-size: 13px; font-weight: 600; color: #52525b; margin-right: 4px; }
+    .preset-btn {
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1px solid #e4e4e7;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      color: #52525b;
+    }
+    .preset-btn:hover, .preset-btn.active { background: #18181b; color: #fff; border-color: #18181b; }
+    .date-inputs { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
+    .date-inputs input {
+      padding: 6px 10px;
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #18181b;
+    }
+    .apply-btn {
+      padding: 6px 16px;
+      background: #18181b;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .apply-btn:hover { background: #3f3f46; }
+
     footer {
       text-align: center;
       padding: 32px;
@@ -230,6 +273,22 @@
   </div>
 
   <div id="content" style="display:none">
+
+    <!-- Date Filter -->
+    <div class="date-filter">
+      <label>Date Range:</label>
+      <button class="preset-btn" onclick="applyPreset(30, this)">30 days</button>
+      <button class="preset-btn active" onclick="applyPreset(90, this)">90 days</button>
+      <button class="preset-btn" onclick="applyPreset(180, this)">6 months</button>
+      <button class="preset-btn" onclick="applyPreset(365, this)">12 months</button>
+      <div class="date-inputs">
+        <span style="font-size:13px;color:#71717a">or custom:</span>
+        <input type="date" id="start-date" />
+        <span style="font-size:13px;color:#71717a">→</span>
+        <input type="date" id="end-date" />
+        <button class="apply-btn" onclick="applyCustom()">Apply</button>
+      </div>
+    </div>
 
     <div class="cards">
       <div class="card">
@@ -276,6 +335,41 @@
 <script>
   const API = 'https://averywgp1-production.up.railway.app';
 
+  // ── Date helpers ──────────────────────────────────────────────────────────
+  function today() { return new Date().toISOString().split('T')[0]; }
+  function daysAgo(n) {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().split('T')[0];
+  }
+
+  let currentStart = daysAgo(90);
+  let currentEnd   = today();
+
+  // Set default date inputs
+  function initDateInputs() {
+    document.getElementById('start-date').value = currentStart;
+    document.getElementById('end-date').value   = currentEnd;
+  }
+
+  function applyPreset(days, btn) {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentStart = daysAgo(days);
+    currentEnd   = today();
+    document.getElementById('start-date').value = currentStart;
+    document.getElementById('end-date').value   = currentEnd;
+    load();
+  }
+
+  function applyCustom() {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    currentStart = document.getElementById('start-date').value;
+    currentEnd   = document.getElementById('end-date').value;
+    if (!currentStart || !currentEnd) return;
+    load();
+  }
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   function getPassword() { return localStorage.getItem('wgp_pw'); }
 
@@ -308,6 +402,7 @@
   function showApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    initDateInputs();
     load();
   }
 
@@ -329,7 +424,7 @@
 
   async function load(attempt = 1) {
     try {
-      const res  = await fetch(`${API}/api/analytics`, {
+      const res  = await fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, {
         headers: { 'x-password': getPassword() }
       });
 
