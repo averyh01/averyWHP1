@@ -198,6 +198,33 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
   }
 });
 
+// Temporary debug: show unique carrier field combinations
+app.get('/api/debug-carriers', requireAuth, async (req, res) => {
+  try {
+    const { data } = await ss.get('/shipments', {
+      params: { shipDateStart: '2026-01-01', shipDateEnd: '2026-05-15', pageSize: 500, page: 1 }
+    });
+    const seen = new Set();
+    const combos = [];
+    for (const s of data.shipments || []) {
+      const key = `${s.carrierCode}|${s.carrierAccountId}|${s.carrierId}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        combos.push({
+          carrierCode: s.carrierCode,
+          carrierAccountId: s.carrierAccountId,
+          carrierId: s.carrierId,
+          serviceCode: s.serviceCode,
+          exampleLabel: s.trackingNumber
+        });
+      }
+    }
+    res.json(combos);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n✅ Server running at http://localhost:${PORT}`);
