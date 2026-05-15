@@ -59,7 +59,7 @@ function carrierLabel(code) {
     stamps_com:   'USPS',
     usps:         'USPS',
     ups:          'UPS (ShipStation)',
-    ups_walleted: 'UPS (WhyGolf)',
+    ups_walleted: 'UPS (WhyGolf + Unishippers)',
     ups_wn:       'UPS (Unishippers)',
   };
   return map[code] || code;
