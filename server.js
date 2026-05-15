@@ -69,14 +69,30 @@ function carrierLabel(code) {
 const cache = {};
 const CACHE_MS = 30 * 60 * 1000;
 
+// ── Fetch one page with retry on 429 ─────────────────────────────────────────
+async function fetchPage(startDate, endDate, page, retries = 0) {
+  try {
+    const { data } = await ss.get('/shipments', {
+      params: { shipDateStart: startDate, shipDateEnd: endDate, pageSize: 500, page }
+    });
+    return data;
+  } catch (err) {
+    if (err.response?.status === 429 && retries < 5) {
+      const wait = 2000 * (retries + 1); // 2s, 4s, 6s, 8s, 10s
+      console.log(`Rate limited on page ${page}, retrying in ${wait}ms...`);
+      await new Promise(r => setTimeout(r, wait));
+      return fetchPage(startDate, endDate, page, retries + 1);
+    }
+    throw err;
+  }
+}
+
 // ── Fetch all shipments for a date range ──────────────────────────────────────
 async function fetchShipments(startDate, endDate) {
   let page = 1, all = [];
 
   while (true) {
-    const { data } = await ss.get('/shipments', {
-      params: { shipDateStart: startDate, shipDateEnd: endDate, pageSize: 500, page }
-    });
+    const data = await fetchPage(startDate, endDate, page);
 
     const valid = (data.shipments || []).filter(s => !s.voided && s.shipmentCost > 0);
     all = all.concat(valid);
@@ -85,7 +101,7 @@ async function fetchShipments(startDate, endDate) {
     page++;
 
     // Respect ShipStation rate limit (40 req/min)
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 300));
   }
 
   return all;
