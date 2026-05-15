@@ -326,6 +326,92 @@
       font-size: 12px;
       color: #a1a1aa;
     }
+
+    /* ── Carrier drawer ── */
+    .drawer-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.3);
+      z-index: 100;
+    }
+    .drawer-overlay.open { display: block; }
+    .drawer {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 400px;
+      background: #fff;
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+      z-index: 101;
+      transform: translateX(100%);
+      transition: transform .25s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid #e4e4e7;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .drawer-header h3 { font-size: 16px; font-weight: 700; }
+    .drawer-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #71717a;
+      font-size: 20px;
+      line-height: 1;
+      padding: 4px;
+    }
+    .drawer-close:hover { color: #18181b; }
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+    .drawer-section {
+      margin-bottom: 24px;
+    }
+    .drawer-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #71717a;
+      margin-bottom: 12px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-box {
+      background: #f4f4f5;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .stat-box .s-label { font-size: 11px; color: #71717a; margin-bottom: 4px; }
+    .stat-box .s-value { font-size: 20px; font-weight: 700; }
+    .stat-box .s-sub   { font-size: 11px; color: #a1a1aa; margin-top: 2px; }
+    .drawer-services li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f4f4f5;
+      color: #3f3f46;
+    }
+    .drawer-services li:last-child { border-bottom: none; }
+    .d-svc-right { display: flex; gap: 10px; align-items: center; color: #71717a; font-size: 12px; }
+    .d-svc-pct { font-weight: 700; color: #18181b; font-size: 13px; }
+    .carrier-card { cursor: pointer; transition: box-shadow .15s; }
+    .carrier-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
   </style>
 </head>
 <body>
@@ -447,6 +533,16 @@
   </div><!-- end app-body -->
 
 </div><!-- end #app -->
+
+<!-- Carrier detail drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="carrier-drawer">
+  <div class="drawer-header">
+    <h3 id="drawer-title">Carrier Detail</h3>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
 
 <script>
   const API = 'https://averywgp1-production.up.railway.app';
@@ -580,6 +676,7 @@
         'Updated ' + new Date(data.generatedAt).toLocaleTimeString();
 
       // ── Render carriers ──
+      carriersData = data.carrierBreakdown;
       const carriersEl = document.getElementById('carriers');
       carriersEl.innerHTML = '';
       for (const c of data.carrierBreakdown.filter(c => c.code !== 'fedex_walleted')) {
@@ -593,7 +690,7 @@
           </li>`).join('');
 
         carriersEl.innerHTML += `
-          <div class="carrier-card">
+          <div class="carrier-card" onclick="openDrawer('${c.code}')">
             <div class="carrier-header">
               <div>
                 <div class="carrier-name">${c.label}</div>
@@ -639,6 +736,86 @@
   }
 
   load();
+
+  // ── Carrier drawer ────────────────────────────────────────────────────────
+  let carriersData = [];
+
+  function openDrawer(code) {
+    const c = carriersData.find(x => x.code === code);
+    if (!c) return;
+
+    document.getElementById('drawer-title').textContent = c.label;
+
+    const dim = c.avgDimensions;
+    const dimStr = dim ? `${dim.l}" × ${dim.w}" × ${dim.h}"` : '—';
+    const dimWt  = c.avgDimWeight ? `${c.avgDimWeight} lbs` : '—';
+    const actWt  = c.avgWeightLbs ? `${c.avgWeightLbs} lbs` : '—';
+
+    const serviceRows = c.services.map(s => `
+      <li>
+        <span>${formatService(s.service)}</span>
+        <span class="d-svc-right">
+          <span>${s.count.toLocaleString()}</span>
+          <span class="d-svc-pct">${s.pct}%</span>
+        </span>
+      </li>`).join('');
+
+    document.getElementById('drawer-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Cost Summary</div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="s-label">Total Spent</div>
+            <div class="s-value">$${c.totalCost.toLocaleString()}</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">Avg per Shipment</div>
+            <div class="s-value">$${c.avgCost}</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">Shipments</div>
+            <div class="s-value">${c.count.toLocaleString()}</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">Share of Volume</div>
+            <div class="s-value">${c.pct}%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">Package Averages</div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="s-label">Actual Weight</div>
+            <div class="s-value">${actWt}</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">Dim Weight</div>
+            <div class="s-value">${dimWt}</div>
+            <div class="s-sub">L×W×H ÷ 139</div>
+          </div>
+          <div class="stat-box" style="grid-column:span 2">
+            <div class="s-label">Avg Dimensions</div>
+            <div class="s-value" style="font-size:16px">${dimStr}</div>
+            <div class="s-sub">${c.dimCoverage}% of shipments have dimension data</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">Services Breakdown</div>
+        <ul class="drawer-services">${serviceRows}</ul>
+      </div>`;
+
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.getElementById('carrier-drawer').classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('carrier-drawer').classList.remove('open');
+  }
 </script>
 </body>
 </html>

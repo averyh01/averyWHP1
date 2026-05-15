@@ -121,7 +121,7 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
 
     const shipments = await fetchShipments(startDate, endDate);
 
-    const carriers   = {};   // { code: { count, totalCost, services: { code: count } } }
+    const carriers   = {};   // { code: { count, totalCost, services, weightOz, dimL, dimW, dimH, dimCount } }
     const products   = {};   // { name: { totalCost, count } }
 
     for (const s of shipments) {
@@ -130,10 +130,19 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
       const cost = s.shipmentCost || 0;
 
       // ── carrier / service rollup ──
-      if (!carriers[c]) carriers[c] = { count: 0, totalCost: 0, services: {} };
+      if (!carriers[c]) carriers[c] = { count: 0, totalCost: 0, services: {}, weightOz: 0, dimL: 0, dimW: 0, dimH: 0, dimCount: 0 };
       carriers[c].count++;
       carriers[c].totalCost += cost;
       carriers[c].services[svc] = (carriers[c].services[svc] || 0) + 1;
+
+      // ── weight / dimensions rollup ──
+      if (s.weight?.value) carriers[c].weightOz += s.weight.value;
+      if (s.dimensions?.length && s.dimensions?.width && s.dimensions?.height) {
+        carriers[c].dimL += s.dimensions.length;
+        carriers[c].dimW += s.dimensions.width;
+        carriers[c].dimH += s.dimensions.height;
+        carriers[c].dimCount++;
+      }
 
       // ── product rollup ──
       const items = s.shipmentItems || [];
@@ -154,22 +163,32 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
     // ── format carrier breakdown ──
     const carrierBreakdown = Object.entries(carriers)
       .sort((a, b) => b[1].count - a[1].count)
-      .map(([code, d]) => ({
-        code,
-        label:      carrierLabel(code),
-        count:      d.count,
-        pct:        +((d.count / total) * 100).toFixed(1),
-        avgCost:    +(d.totalCost / d.count).toFixed(2),
-        totalCost:  +d.totalCost.toFixed(2),
-        services:   Object.entries(d.services)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5)
-          .map(([svc, cnt]) => ({
-            service: svc,
-            count:   cnt,
-            pct:     +((cnt / d.count) * 100).toFixed(1)
-          }))
-      }));
+      .map(([code, d]) => {
+        const avgL = d.dimCount ? +(d.dimL / d.dimCount).toFixed(1) : null;
+        const avgW = d.dimCount ? +(d.dimW / d.dimCount).toFixed(1) : null;
+        const avgH = d.dimCount ? +(d.dimH / d.dimCount).toFixed(1) : null;
+        const avgDimWeight = (avgL && avgW && avgH) ? +((avgL * avgW * avgH) / 139).toFixed(1) : null;
+        const avgWeightLbs = d.count ? +((d.weightOz / d.count) / 16).toFixed(2) : null;
+        return {
+          code,
+          label:        carrierLabel(code),
+          count:        d.count,
+          pct:          +((d.count / total) * 100).toFixed(1),
+          avgCost:      +(d.totalCost / d.count).toFixed(2),
+          totalCost:    +d.totalCost.toFixed(2),
+          avgWeightLbs,
+          avgDimensions: avgL ? { l: avgL, w: avgW, h: avgH } : null,
+          avgDimWeight,
+          dimCoverage:  d.dimCount ? +((d.dimCount / d.count) * 100).toFixed(0) : 0,
+          services:     Object.entries(d.services)
+            .sort((a, b) => b[1] - a[1])
+            .map(([svc, cnt]) => ({
+              service: svc,
+              count:   cnt,
+              pct:     +((cnt / d.count) * 100).toFixed(1)
+            }))
+        };
+      });
 
     // ── format product breakdown ──
     const productBreakdown = Object.entries(products)
