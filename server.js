@@ -277,6 +277,40 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
   }
 });
 
+// ── HyperSKU ─────────────────────────────────────────────────────────────────
+let hyperskuToken = null;
+let hyperskuTokenExpiry = 0;
+
+async function getHyperskuToken() {
+  if (hyperskuToken && Date.now() < hyperskuTokenExpiry) return hyperskuToken;
+  const { data } = await axios.post('https://api.hypersku.com/api/auth/admin/token', {
+    username: process.env.HYPERSKU_USERNAME,
+    password: process.env.HYPERSKU_PASSWORD,
+  });
+  hyperskuToken = data.token;
+  hyperskuTokenExpiry = Date.now() + 60 * 60 * 1000; // cache 1 hour
+  return hyperskuToken;
+}
+
+app.get('/api/hypersku/orders', requireAuth, async (req, res) => {
+  try {
+    const token = await getHyperskuToken();
+    const { data } = await axios.get('https://api.hypersku.com/api/order/list', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: {
+        pageNo: req.query.page || 1,
+        pageSize: req.query.pageSize || 50,
+        startTime: req.query.start,
+        endTime: req.query.end,
+      }
+    });
+    res.json(data);
+  } catch (err) {
+    console.error('HyperSKU error:', err.response?.data || err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n✅ Server running at http://localhost:${PORT}`);
