@@ -453,6 +453,16 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
     const topStates    = Object.entries(byState).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([s,n])=>({state:s,orders:n,pct:+((n/total)*100).toFixed(1)}));
     const topProducts  = Object.entries(byProduct).sort((a,b)=>b[1].orders-a[1].orders).slice(0,10).map(([name,d])=>({name,orders:d.orders,units:d.units}));
 
+    // Fetch product images
+    let productImages = {};
+    try {
+      const { data: prodData } = await shopify.get('/products.json', { params: { fields: 'title,image', limit: 250 } });
+      for (const p of prodData.products || []) {
+        if (p.image?.src) productImages[p.title] = p.image.src;
+      }
+    } catch(e) {}
+    const topProductsWithImages = topProducts.map(p => ({ ...p, image: productImages[p.name] || null }));
+
     res.json({
       dateRange: `${startDate} → ${endDate}`,
       totalOrders: total,
@@ -460,7 +470,7 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
       international: { count: intlCount, pct: +((intlCount/total)*100).toFixed(1) },
       topCountries,
       topStates,
-      topProducts,
+      topProducts: topProductsWithImages,
     });
   } catch (err) {
     console.error('Shopify overview error:', err.response?.data || err.message);

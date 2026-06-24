@@ -431,6 +431,99 @@
     .d-svc-pct { font-weight: 700; color: #18181b; font-size: 13px; }
     .carrier-card { cursor: pointer; transition: box-shadow .15s; }
     .carrier-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+
+    /* ── 360 Overview (futuristic dark) ── */
+    .view-360-wrap { color: #e4e4e7; }
+
+    .hero-split {
+      background: linear-gradient(135deg, #0d0d10 0%, #160d10 100%);
+      border: 1px solid #2a2030;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-split::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; left: 50%;
+      transform: translateX(-50%);
+      width: 400px; height: 300px;
+      background: radial-gradient(circle, rgba(255,69,0,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .split-stat { text-align: center; }
+    .split-big { font-size: 52px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+    .split-big.us   { color: #fff; }
+    .split-big.intl { color: #FF4500; text-shadow: 0 0 24px rgba(255,69,0,0.45); }
+    .split-sub   { font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em; color: #52525b; }
+    .split-count { font-size: 15px; color: #a1a1aa; margin-top: 6px; }
+    .split-divider-line { width: 1px; height: 80px; background: linear-gradient(to bottom, transparent, #3f3f46, transparent); }
+    .geo-bar { height: 8px; background: #1a1a1f; border-radius: 99px; overflow: hidden; display: flex; }
+    .geo-bar-us   { background: #e4e4e7; transition: width .8s ease; }
+    .geo-bar-intl { background: linear-gradient(to right, #FF4500, #ff7043); transition: width .8s ease; }
+
+    .section-360 {
+      background: #0d0d10;
+      border: 1px solid #1f1f2a;
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    .section-360-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #FF4500;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-360-title::after { content: ''; flex: 1; height: 1px; background: #1f1f2a; }
+
+    .product-grid-360 { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .product-card-360 {
+      background: #111118;
+      border: 1px solid #1f1f2a;
+      border-radius: 12px;
+      padding: 14px;
+      transition: border-color .2s, transform .2s;
+    }
+    .product-card-360:hover { border-color: #FF4500; transform: translateY(-2px); }
+    .product-img-360 {
+      width: 100%; aspect-ratio: 1; object-fit: contain;
+      background: #1a1a24; border-radius: 8px; margin-bottom: 10px; display: block;
+    }
+    .product-img-placeholder-360 {
+      width: 100%; aspect-ratio: 1; background: #1a1a24; border-radius: 8px;
+      margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 28px;
+    }
+    .product-name-360  { font-size: 12px; font-weight: 600; color: #d4d4d8; margin-bottom: 6px; line-height: 1.3; }
+    .product-orders-360 { font-size: 20px; font-weight: 800; color: #FF4500; line-height: 1; }
+    .product-units-360  { font-size: 11px; color: #52525b; margin-top: 2px; }
+
+    .geo-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .geo-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid #1a1a24;
+    }
+    .geo-row:last-child { border-bottom: none; }
+    .geo-flag  { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
+    .geo-name  { flex: 1; font-size: 13px; color: #d4d4d8; font-weight: 500; }
+    .geo-orders { font-size: 13px; font-weight: 700; color: #FF4500; flex-shrink: 0; }
+    .geo-pct   { font-size: 11px; color: #52525b; flex-shrink: 0; width: 36px; text-align: right; }
+    .geo-bar-mini { height: 3px; background: #1f1f2a; border-radius: 99px; overflow: hidden; width: 50px; flex-shrink: 0; }
+    .geo-bar-mini-fill { height: 100%; background: linear-gradient(to right, #FF4500, #ff7043); border-radius: 99px; }
   </style>
 </head>
 <body>
@@ -461,7 +554,14 @@
     <!-- Sidebar -->
     <nav class="sidebar">
       <div class="sidebar-label">Navigation</div>
-      <button class="nav-item active" id="nav-carriers" onclick="switchTab('carriers')">
+      <button class="nav-item active" id="nav-360" onclick="switchTab('360')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        360° Overview
+      </button>
+      <button class="nav-item" id="nav-carriers" onclick="switchTab('carriers')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
           <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
@@ -528,8 +628,11 @@
           </div>
         </div>
 
+        <!-- ── 360 Overview tab ── -->
+        <div id="view-360"></div>
+
         <!-- ── Carriers tab ── -->
-        <div id="view-carriers">
+        <div id="view-carriers" style="display:none">
           <h2>Carrier Breakdown</h2>
           <div class="carriers" id="carriers"></div>
         </div>
@@ -620,19 +723,25 @@
   })();
 
   // ── Tab switching ─────────────────────────────────────────────────────────
-  let activeTab = 'carriers';
+  let activeTab = '360';
 
   function switchTab(tab) {
     activeTab = tab;
+    document.getElementById('view-360').style.display        = tab === '360'        ? 'block' : 'none';
     document.getElementById('view-carriers').style.display   = tab === 'carriers'   ? 'block' : 'none';
     document.getElementById('view-products').style.display   = tab === 'products'   ? 'block' : 'none';
     document.getElementById('view-zones').style.display      = tab === 'zones'      ? 'block' : 'none';
     document.getElementById('view-selections').style.display = tab === 'selections' ? 'block' : 'none';
+    document.getElementById('nav-360').classList.toggle('active',        tab === '360');
     document.getElementById('nav-carriers').classList.toggle('active',   tab === 'carriers');
     document.getElementById('nav-products').classList.toggle('active',   tab === 'products');
     document.getElementById('nav-zones').classList.toggle('active',      tab === 'zones');
     document.getElementById('nav-selections').classList.toggle('active', tab === 'selections');
+    if (tab === '360') loadOverview();
+    if ((tab === 'carriers' || tab === 'products') && !shipStationLoaded) load();
   }
+
+  let shipStationLoaded = false;
 
   // ── Date helpers ──────────────────────────────────────────────────────────
   function today() { return new Date().toISOString().split('T')[0]; }
@@ -657,7 +766,7 @@
     currentEnd   = today();
     document.getElementById('start-date').value = currentStart;
     document.getElementById('end-date').value   = currentEnd;
-    load();
+    if (activeTab === '360') loadOverview(); else load();
   }
 
   function applyCustom() {
@@ -665,7 +774,7 @@
     currentStart = document.getElementById('start-date').value;
     currentEnd   = document.getElementById('end-date').value;
     if (!currentStart || !currentEnd) return;
-    load();
+    if (activeTab === '360') loadOverview(); else load();
   }
 
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -701,7 +810,129 @@
     document.getElementById('app').style.display = 'flex';
     document.getElementById('app').style.flexDirection = 'column';
     initDateInputs();
-    load();
+    switchTab('360');
+  }
+
+  // ── 360 Overview ──────────────────────────────────────────────────────────
+  function countryFlag(code) {
+    if (!code || code.length !== 2) return '🌐';
+    try { return code.toUpperCase().split('').map(c => String.fromCodePoint(c.charCodeAt(0)+127397)).join(''); }
+    catch { return '🌐'; }
+  }
+
+  const STATE_NAMES = {
+    AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',
+    CT:'Connecticut',DE:'Delaware',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',
+    IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',
+    ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',
+    MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',
+    NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',
+    ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',
+    RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',
+    UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',
+    WI:'Wisconsin',WY:'Wyoming'
+  };
+
+  async function loadOverview() {
+    document.getElementById('view-360').innerHTML = `
+      <div style="text-align:center;padding:80px 20px;color:#52525b">
+        <div style="width:32px;height:32px;border:2px solid #1f1f2a;border-top-color:#FF4500;
+          border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px"></div>
+        Loading 360° data...
+      </div>`;
+    try {
+      const res = await fetch(`${API}/api/shopify/overview?start=${currentStart}&end=${currentEnd}`, {
+        headers: { 'x-password': getPassword() }
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      renderOverview(data);
+    } catch(err) {
+      document.getElementById('view-360').innerHTML =
+        `<p style="color:#ef4444;padding:40px">Failed to load: ${err.message}</p>`;
+    }
+  }
+
+  function renderOverview(d) {
+    const maxC = d.topCountries[0]?.orders || 1;
+    const maxS = d.topStates[0]?.orders || 1;
+
+    const countryRows = d.topCountries.map(c => `
+      <div class="geo-row">
+        <span class="geo-flag">${countryFlag(c.country)}</span>
+        <span class="geo-name">${c.country}</span>
+        <div class="geo-bar-mini"><div class="geo-bar-mini-fill" style="width:${(c.orders/maxC*100).toFixed(0)}%"></div></div>
+        <span class="geo-orders">${c.orders}</span>
+        <span class="geo-pct">${c.pct}%</span>
+      </div>`).join('');
+
+    const stateRows = d.topStates.map(s => `
+      <div class="geo-row">
+        <span class="geo-flag">🏴</span>
+        <span class="geo-name">${STATE_NAMES[s.state] || s.state}</span>
+        <div class="geo-bar-mini"><div class="geo-bar-mini-fill" style="width:${(s.orders/maxS*100).toFixed(0)}%"></div></div>
+        <span class="geo-orders">${s.orders}</span>
+        <span class="geo-pct">${s.pct}%</span>
+      </div>`).join('');
+
+    const productCards = d.topProducts.map(p => {
+      const img = p.image
+        ? `<img src="${p.image}" class="product-img-360" alt="${p.name}" loading="lazy" />`
+        : `<div class="product-img-placeholder-360">⛳</div>`;
+      return `
+        <div class="product-card-360">
+          ${img}
+          <div class="product-name-360">${p.name}</div>
+          <div class="product-orders-360">${p.orders.toLocaleString()}</div>
+          <div class="product-units-360">${p.units.toLocaleString()} units</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('status').style.display  = 'none';
+    document.getElementById('content').style.display = 'block';
+    document.getElementById('view-360').innerHTML = `
+      <div class="view-360-wrap">
+        <div class="hero-split">
+          <div class="split-grid">
+            <div class="split-stat">
+              <div class="split-big us">${d.domestic.pct}%</div>
+              <div class="split-sub">Domestic · US</div>
+              <div class="split-count">${d.domestic.count.toLocaleString()} orders</div>
+            </div>
+            <div class="split-divider-line"></div>
+            <div class="split-stat">
+              <div class="split-big intl">${d.international.pct}%</div>
+              <div class="split-sub">International</div>
+              <div class="split-count">${d.international.count.toLocaleString()} orders</div>
+            </div>
+          </div>
+          <div class="geo-bar">
+            <div class="geo-bar-us" style="width:${d.domestic.pct}%"></div>
+            <div class="geo-bar-intl" style="width:${d.international.pct}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#52525b">
+            <span>← US</span>
+            <span style="color:#3f3f46">${d.totalOrders.toLocaleString()} total orders · ${d.dateRange}</span>
+            <span>International →</span>
+          </div>
+        </div>
+
+        <div class="section-360">
+          <div class="section-360-title">Top Products</div>
+          <div class="product-grid-360">${productCards}</div>
+        </div>
+
+        <div class="geo-tables">
+          <div class="section-360">
+            <div class="section-360-title">Top International Markets</div>
+            ${countryRows}
+          </div>
+          <div class="section-360">
+            <div class="section-360-title">Top US States</div>
+            ${stateRows}
+          </div>
+        </div>
+      </div>`;
   }
 
   // ── On page load: check session ───────────────────────────────────────────
@@ -796,6 +1027,7 @@
           </tr>`;
       });
 
+      shipStationLoaded = true;
       document.getElementById('status').style.display  = 'none';
       document.getElementById('content').style.display = 'block';
       document.getElementById('footer').textContent    =
