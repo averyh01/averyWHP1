@@ -115,7 +115,7 @@
       color: #FF4500;
       letter-spacing: -0.02em;
     }
-    header span { font-size: 12px; color: #52525b; }
+    #generated { font-size: 12px; color: #52525b; }
 
     /* ── Body: sidebar + content ── */
     .app-body {
@@ -515,8 +515,8 @@
       background: #0d0d10; border: 1px solid #1f1f2a; border-radius: 16px; padding: 24px;
     }
     .returns-stat-label {
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.1em; color: #52525b; margin-bottom: 10px;
+      font-size: 14px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #fff; margin-bottom: 10px;
     }
     .returns-stat-big { font-size: 48px; font-weight: 800; line-height: 1; color: #FF4500; }
     .returns-stat-big.white { color: #fff; }
@@ -1084,7 +1084,7 @@
     if (hyperCount > 0) {
       const pct = +((hyperCount / newTotal) * 100).toFixed(1);
       carriersEl.innerHTML += `
-        <div class="carrier-card" style="cursor:default;border-left:3px solid #10b981">
+        <div class="carrier-card" onclick="openHyperSkuDrawer()" style="border-left:3px solid #10b981">
           <div class="carrier-header">
             <div>
               <div class="carrier-name">HyperSKU · International</div>
@@ -1173,6 +1173,7 @@
       if (data.error) throw new Error(data.error);
 
       const hyperCount  = intlData.totalOrders || 0;
+      hyperSkuData = intlData;
       const grandTotal  = data.totalShipments + hyperCount;
 
       document.getElementById('label-primary').textContent   = 'Total Shipments';
@@ -1269,6 +1270,7 @@
 
   // ── Carrier drawer ────────────────────────────────────────────────────────
   let carriersData = [];
+  let hyperSkuData  = null; // stored from load() for drawer use
 
   function openDrawer(code) {
     const c = carriersData.find(x => x.code === code);
@@ -1357,6 +1359,66 @@
       <div class="drawer-section">
         <div class="drawer-section-title">Services Breakdown</div>
         <ul class="drawer-services">${serviceRows}</ul>
+      </div>`;
+
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.getElementById('carrier-drawer').classList.add('open');
+  }
+
+  function openHyperSkuDrawer() {
+    const d = hyperSkuData;
+    document.getElementById('drawer-title').textContent = 'HyperSKU · International';
+
+    const countryRows = d ? Object.entries(d.byCountry || {})
+      .sort((a, b) => b[1] - a[1]).slice(0, 10)
+      .map(([cc, n]) => `
+        <li style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid #f4f4f5;color:#3f3f46">
+          <span>${countryFlag(cc)} ${cc}</span>
+          <span style="font-weight:700;color:#18181b">${n}</span>
+        </li>`).join('') : '<li style="color:#71717a;font-size:13px">No country data</li>';
+
+    const productRows = d ? Object.entries(d.byProduct || {})
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, qty]) => `
+        <li style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid #f4f4f5;color:#3f3f46">
+          <span>${name}</span>
+          <span style="font-weight:700;color:#18181b">${qty} units</span>
+        </li>`).join('') : '';
+
+    document.getElementById('drawer-body').innerHTML = `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Overview</div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="s-label">Total Orders</div>
+            <div class="s-value">${(d?.totalOrders || 0).toLocaleString()}</div>
+          </div>
+          <div class="stat-box">
+            <div class="s-label">Fulfillment</div>
+            <div class="s-value" style="font-size:14px">Direct</div>
+            <div class="s-sub">Bypasses ShipStation</div>
+          </div>
+          <div class="stat-box" style="grid-column:span 2">
+            <div class="s-label">Products</div>
+            <div class="s-value" style="font-size:14px">Putting Thing &amp; Wrist-X</div>
+            <div class="s-sub">International orders only</div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Units by Product</div>
+        <ul style="list-style:none">${productRows || '<li style="color:#71717a;font-size:13px">No product data</li>'}</ul>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Top Countries</div>
+        <ul style="list-style:none">${countryRows}</ul>
+      </div>
+      <div class="drawer-section">
+        <div class="drawer-section-title">Data Notes</div>
+        <div style="font-size:12px;color:#71717a;line-height:1.6">
+          Shipping dims &amp; costs are not available via the HyperSKU API — only lookup-by-order-ID is exposed.<br><br>
+          Order counts sourced from Shopify DTC (non-US orders for Putting Thing &amp; Wrist-X).
+        </div>
       </div>`;
 
     document.getElementById('drawer-overlay').classList.add('open');
