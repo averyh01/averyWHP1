@@ -619,13 +619,6 @@
         </svg>
         Products
       </button>
-      <button class="nav-item" id="nav-zones" onclick="switchTab('zones')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
-          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-        </svg>
-        Zones
-      </button>
       <button class="nav-item" id="nav-returns" onclick="switchTab('returns')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
@@ -702,16 +695,6 @@
           </div>
         </div>
 
-        <!-- ── Zones tab ── -->
-        <div id="view-zones" style="display:none">
-          <h2>Shipping Zones</h2>
-          <div style="background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:48px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:16px">🗺️</div>
-            <div style="font-size:15px;font-weight:600;margin-bottom:8px">Coming Soon</div>
-            <div style="font-size:13px;color:#71717a">Connect Shopify to unlock zone-level shipping analysis.</div>
-          </div>
-        </div>
-
         <!-- ── Products tab ── -->
         <div id="view-products" style="display:none">
           <h2>Product Shipping Costs</h2>
@@ -785,13 +768,11 @@
     document.getElementById('view-360').style.display        = tab === '360'        ? 'block' : 'none';
     document.getElementById('view-carriers').style.display   = tab === 'carriers'   ? 'block' : 'none';
     document.getElementById('view-products').style.display   = tab === 'products'   ? 'block' : 'none';
-    document.getElementById('view-zones').style.display      = tab === 'zones'      ? 'block' : 'none';
     document.getElementById('view-returns').style.display    = tab === 'returns'    ? 'block' : 'none';
     document.getElementById('view-selections').style.display = tab === 'selections' ? 'block' : 'none';
     document.getElementById('nav-360').classList.toggle('active',        tab === '360');
     document.getElementById('nav-carriers').classList.toggle('active',   tab === 'carriers');
     document.getElementById('nav-products').classList.toggle('active',   tab === 'products');
-    document.getElementById('nav-zones').classList.toggle('active',      tab === 'zones');
     document.getElementById('nav-returns').classList.toggle('active',    tab === 'returns');
     document.getElementById('nav-selections').classList.toggle('active', tab === 'selections');
     if (tab === '360') loadOverview();
@@ -929,23 +910,11 @@
       if (shopifyData.error) throw new Error(shopifyData.error);
       renderOverview(shopifyData, null); // render now, channels pending
 
-      // Load ShipStation in background, patch in channels when ready
+      // Load ShipStation in background — only used for Order Channels section
       fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } })
         .then(r => r.json())
         .then(analyticsData => {
           if (analyticsData.error) return;
-          if (!shipStationLoaded) {
-            carriersData = analyticsData.carrierBreakdown || [];
-            document.getElementById('totalShipments').textContent = analyticsData.totalShipments.toLocaleString();
-            document.getElementById('totalProducts').textContent  = analyticsData.productBreakdown?.length || 0;
-            document.getElementById('dateRange').textContent      = analyticsData.dateRange;
-            document.getElementById('generated').textContent      =
-              'Updated ' + new Date(analyticsData.generatedAt).toLocaleTimeString();
-            renderCarriers(analyticsData);
-            renderProducts(analyticsData);
-            shipStationLoaded = true;
-          }
-          // Patch channels section into the already-rendered 360 view
           const channelsEl = document.getElementById('channels-section');
           if (channelsEl) channelsEl.innerHTML = buildChannelsHTML(analyticsData.storeBreakdown || []);
         })
@@ -1087,13 +1056,37 @@
     ups_wn:       '#92400E',
   };
 
-  function renderCarriers(data) {
+  function renderCarriers(data, hyperCount = 0) {
     carriersData = data.carrierBreakdown;
+    const newTotal = data.totalShipments + hyperCount;
     const carriersEl = document.getElementById('carriers');
     carriersEl.innerHTML = '';
+
+    // HyperSKU card (international direct fulfillment)
+    if (hyperCount > 0) {
+      const pct = +((hyperCount / newTotal) * 100).toFixed(1);
+      carriersEl.innerHTML += `
+        <div class="carrier-card" style="cursor:default;border-left:3px solid #10b981">
+          <div class="carrier-header">
+            <div>
+              <div class="carrier-name">HyperSKU · International</div>
+              <div class="carrier-meta">${hyperCount.toLocaleString()} orders · Putting Thing &amp; Wrist-X direct fulfillment</div>
+            </div>
+            <div class="carrier-pct">${pct}%</div>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${pct}%;background:#10b981"></div>
+          </div>
+          <ul class="services">
+            <li><span>International Direct Fulfillment</span><span class="svc-pct">100%</span></li>
+          </ul>
+        </div>`;
+    }
+
     for (const c of data.carrierBreakdown.filter(c => c.code !== 'fedex_walleted')) {
-      const color = COLORS[c.code] || '#18181b';
-      const svcs  = c.services.map(s => `
+      const color      = COLORS[c.code] || '#18181b';
+      const adjustedPct = +((c.count / newTotal) * 100).toFixed(1);
+      const svcs = c.services.map(s => `
         <li>
           <span>${formatService(s.service)}</span>
           <span class="svc-pct">${s.pct}%
@@ -1109,10 +1102,10 @@
                 ${c.count.toLocaleString()} shipments &middot; avg $${c.avgCost} &middot; <strong>$${c.totalCost.toLocaleString()}</strong> total
               </div>
             </div>
-            <div class="carrier-pct">${c.pct}%</div>
+            <div class="carrier-pct">${adjustedPct}%</div>
           </div>
           <div class="bar-track">
-            <div class="bar-fill" style="width:${c.pct}%;background:${color}"></div>
+            <div class="bar-fill" style="width:${adjustedPct}%;background:${color}"></div>
           </div>
           <ul class="services">${svcs}</ul>
         </div>`;
@@ -1144,34 +1137,40 @@
     document.getElementById('content').style.display = 'none';
 
     try {
-      const res = await fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, {
-        headers: { 'x-password': getPassword() }
-      });
+      const pw = getPassword();
+      const [analyticsRes, intlRes] = await Promise.all([
+        fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } }),
+        fetch(`${API}/api/shopify/international-orders?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } }),
+      ]);
 
-      if (res.status === 429 && attempt <= 3) {
+      if (analyticsRes.status === 429 && attempt <= 3) {
         document.getElementById('status').innerHTML =
           '<div class="spinner"></div>Rate limit hit — retrying in 3 seconds...';
         await new Promise(r => setTimeout(r, 3000));
         return load(attempt + 1);
       }
 
-      const data = await res.json();
+      const data     = await analyticsRes.json();
+      const intlData = await intlRes.json();
       if (data.error) throw new Error(data.error);
 
-      document.getElementById('totalShipments').textContent = data.totalShipments.toLocaleString();
-      document.getElementById('totalProducts').textContent  = data.productBreakdown.length;
+      const hyperCount  = intlData.totalOrders || 0;
+      const grandTotal  = data.totalShipments + hyperCount;
+
+      document.getElementById('totalShipments').textContent = grandTotal.toLocaleString();
+      document.getElementById('totalProducts').textContent  = data.productBreakdown.filter(p => !PP_RE_FE.test(p.name)).length;
       document.getElementById('dateRange').textContent      = data.dateRange;
       document.getElementById('generated').textContent      =
         'Updated ' + new Date(data.generatedAt).toLocaleTimeString();
 
-      renderCarriers(data);
+      renderCarriers(data, hyperCount);
       renderProducts(data);
 
       shipStationLoaded = true;
       document.getElementById('status').style.display  = 'none';
       document.getElementById('content').style.display = 'block';
       document.getElementById('footer').textContent    =
-        'Data from ShipStation · ' + data.dateRange;
+        'Data from ShipStation + HyperSKU · ' + data.dateRange;
 
     } catch (err) {
       document.getElementById('status').innerHTML = `
