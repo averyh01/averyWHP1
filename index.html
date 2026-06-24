@@ -841,19 +841,35 @@
         Loading 360° data...
       </div>`;
     try {
-      const res = await fetch(`${API}/api/shopify/overview?start=${currentStart}&end=${currentEnd}`, {
-        headers: { 'x-password': getPassword() }
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      renderOverview(data);
+      const pw = getPassword();
+      const [shopifyRes, analyticsRes] = await Promise.all([
+        fetch(`${API}/api/shopify/overview?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } }),
+        fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`,        { headers: { 'x-password': pw } }),
+      ]);
+      const shopifyData   = await shopifyRes.json();
+      const analyticsData = await analyticsRes.json();
+      if (shopifyData.error)   throw new Error(shopifyData.error);
+      if (analyticsData.error) throw new Error(analyticsData.error);
+      // Keep analytics data available for carriers tab (avoids second load)
+      if (!shipStationLoaded) {
+        carriersData = analyticsData.carrierBreakdown || [];
+        document.getElementById('totalShipments').textContent = analyticsData.totalShipments.toLocaleString();
+        document.getElementById('totalProducts').textContent  = analyticsData.productBreakdown?.length || 0;
+        document.getElementById('dateRange').textContent      = analyticsData.dateRange;
+        document.getElementById('generated').textContent      =
+          'Updated ' + new Date(analyticsData.generatedAt).toLocaleTimeString();
+        renderCarriers(analyticsData);
+        renderProducts(analyticsData);
+        shipStationLoaded = true;
+      }
+      renderOverview(shopifyData, analyticsData.storeBreakdown || []);
     } catch(err) {
       document.getElementById('view-360').innerHTML =
         `<p style="color:#ef4444;padding:40px">Failed to load: ${err.message}</p>`;
     }
   }
 
-  function renderOverview(d) {
+  function renderOverview(d, storeBreakdown) {
     const maxC = d.topCountries[0]?.orders || 1;
     const maxS = d.topStates[0]?.orders || 1;
 
@@ -888,6 +904,27 @@
         </div>`;
     }).join('');
 
+    const totalShipped = storeBreakdown.reduce((sum, s) => sum + s.count, 0) || 1;
+    const storeChannels = storeBreakdown.map(s => {
+      const STORE_COLORS = {
+        304177: '#e4e4e7',   // DTC — white
+        342112: '#FF4500',   // Wholesale — orange
+        325792: '#f59e0b',   // Amazon — amber
+        188942: '#52525b',   // Manual — muted
+      };
+      const color = STORE_COLORS[s.storeId] || '#71717a';
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1a1a24">
+          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
+          <div style="flex:1;font-size:13px;color:#d4d4d8;font-weight:500">${s.name}</div>
+          <div style="width:80px;height:4px;background:#1a1a24;border-radius:99px;overflow:hidden;flex-shrink:0">
+            <div style="height:100%;width:${(s.count/totalShipped*100).toFixed(0)}%;background:${color};border-radius:99px"></div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:${color};width:36px;text-align:right;flex-shrink:0">${s.pct}%</div>
+          <div style="font-size:11px;color:#52525b;width:70px;text-align:right;flex-shrink:0">${s.count.toLocaleString()} shipped</div>
+        </div>`;
+    }).join('');
+
     document.getElementById('status').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
     document.getElementById('view-360').innerHTML = `
@@ -917,8 +954,14 @@
           </div>
         </div>
 
+        ${storeChannels ? `
         <div class="section-360">
-          <div class="section-360-title">Top Products</div>
+          <div class="section-360-title">Order Channels · ShipStation</div>
+          ${storeChannels}
+        </div>` : ''}
+
+        <div class="section-360">
+          <div class="section-360-title">Top Products · DTC</div>
           <div class="product-grid-360">${productCards}</div>
         </div>
 
@@ -955,6 +998,53 @@
     ups_wn:       '#92400E',
   };
 
+  function renderCarriers(data) {
+    carriersData = data.carrierBreakdown;
+    const carriersEl = document.getElementById('carriers');
+    carriersEl.innerHTML = '';
+    for (const c of data.carrierBreakdown.filter(c => c.code !== 'fedex_walleted')) {
+      const color = COLORS[c.code] || '#18181b';
+      const svcs  = c.services.map(s => `
+        <li>
+          <span>${formatService(s.service)}</span>
+          <span class="svc-pct">${s.pct}%
+            <span style="font-weight:400;color:#a1a1aa">(${s.count.toLocaleString()})</span>
+          </span>
+        </li>`).join('');
+      carriersEl.innerHTML += `
+        <div class="carrier-card" onclick="openDrawer('${c.code}')">
+          <div class="carrier-header">
+            <div>
+              <div class="carrier-name">${c.label}</div>
+              <div class="carrier-meta">
+                ${c.count.toLocaleString()} shipments &middot; avg $${c.avgCost} &middot; <strong>$${c.totalCost.toLocaleString()}</strong> total
+              </div>
+            </div>
+            <div class="carrier-pct">${c.pct}%</div>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${c.pct}%;background:${color}"></div>
+          </div>
+          <ul class="services">${svcs}</ul>
+        </div>`;
+    }
+  }
+
+  function renderProducts(data) {
+    const tbody = document.getElementById('productTable');
+    tbody.innerHTML = '';
+    data.productBreakdown.forEach((p, i) => {
+      tbody.innerHTML += `
+        <tr>
+          <td class="muted">${i + 1}</td>
+          <td>${p.name}</td>
+          <td class="cost">$${p.avgCost}</td>
+          <td><span class="shopify-pill">🔗 Shopify connected</span></td>
+          <td class="muted">${p.shipments.toLocaleString()}</td>
+        </tr>`;
+    });
+  }
+
   async function load(attempt = 1) {
     document.getElementById('status').innerHTML = '<div class="spinner"></div>Loading data...';
     document.getElementById('status').style.display  = 'block';
@@ -981,51 +1071,8 @@
       document.getElementById('generated').textContent      =
         'Updated ' + new Date(data.generatedAt).toLocaleTimeString();
 
-      // ── Render carriers ──
-      carriersData = data.carrierBreakdown;
-      const carriersEl = document.getElementById('carriers');
-      carriersEl.innerHTML = '';
-      for (const c of data.carrierBreakdown.filter(c => c.code !== 'fedex_walleted')) {
-        const color = COLORS[c.code] || '#18181b';
-        const svcs  = c.services.map(s => `
-          <li>
-            <span>${formatService(s.service)}</span>
-            <span class="svc-pct">${s.pct}%
-              <span style="font-weight:400;color:#a1a1aa">(${s.count.toLocaleString()})</span>
-            </span>
-          </li>`).join('');
-
-        carriersEl.innerHTML += `
-          <div class="carrier-card" onclick="openDrawer('${c.code}')">
-            <div class="carrier-header">
-              <div>
-                <div class="carrier-name">${c.label}</div>
-                <div class="carrier-meta">
-                  ${c.count.toLocaleString()} shipments &middot; avg $${c.avgCost} &middot; <strong>$${c.totalCost.toLocaleString()}</strong> total
-                </div>
-              </div>
-              <div class="carrier-pct">${c.pct}%</div>
-            </div>
-            <div class="bar-track">
-              <div class="bar-fill" style="width:${c.pct}%;background:${color}"></div>
-            </div>
-            <ul class="services">${svcs}</ul>
-          </div>`;
-      }
-
-      // ── Render products ──
-      const tbody = document.getElementById('productTable');
-      tbody.innerHTML = '';
-      data.productBreakdown.forEach((p, i) => {
-        tbody.innerHTML += `
-          <tr>
-            <td class="muted">${i + 1}</td>
-            <td>${p.name}</td>
-            <td class="cost">$${p.avgCost}</td>
-            <td><span class="shopify-pill">🔗 Connect Shopify</span></td>
-            <td class="muted">${p.shipments.toLocaleString()}</td>
-          </tr>`;
-      });
+      renderCarriers(data);
+      renderProducts(data);
 
       shipStationLoaded = true;
       document.getElementById('status').style.display  = 'none';
@@ -1041,8 +1088,6 @@
         </p>`;
     }
   }
-
-  load();
 
   // ── Carrier drawer ────────────────────────────────────────────────────────
   let carriersData = [];

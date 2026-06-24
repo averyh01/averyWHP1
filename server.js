@@ -46,6 +46,14 @@ const ss = axios.create({
   headers: { Authorization: `Basic ${SS_AUTH}` }
 });
 
+// ── Store ID → label map ──────────────────────────────────────────────────────
+const STORE_LABELS = {
+  304177: 'WhyGolf Retail (DTC)',
+  342112: 'WhyGolf Wholesale',
+  325792: 'Amazon USA',
+  188942: 'Manual Orders',
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function monthsAgo(n) {
   const d = new Date();
@@ -123,6 +131,7 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
 
     const carriers   = {};
     const products   = {};
+    const stores     = {};
 
     // Services that charge dim weight on ALL packages (no size threshold)
     const AIR_SERVICES = new Set([
@@ -151,6 +160,10 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
       const c    = s.carrierCode  || 'unknown';
       const svc  = s.serviceCode  || 'unknown';
       const cost = s.shipmentCost || 0;
+
+      // Store / channel tracking
+      const sid = s.advancedOptions?.storeId;
+      if (sid) stores[sid] = (stores[sid] || 0) + 1;
 
       if (!carriers[c]) carriers[c] = {
         count: 0, totalCost: 0, services: {},
@@ -260,12 +273,22 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
       .sort((a, b) => b.shipments - a.shipments)
       .slice(0, 30);
 
+    const storeBreakdown = Object.entries(stores)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id, count]) => ({
+        storeId: Number(id),
+        name:    STORE_LABELS[Number(id)] || `Store ${id}`,
+        count,
+        pct:     +((count / total) * 100).toFixed(1),
+      }));
+
     const result = {
       generatedAt:     new Date().toISOString(),
       dateRange:       `${startDate} → ${endDate}`,
       totalShipments:  total,
       carrierBreakdown,
-      productBreakdown
+      productBreakdown,
+      storeBreakdown,
     };
 
     cache[cacheKey] = { data: result, ts: Date.now() };
