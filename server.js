@@ -50,7 +50,7 @@ const ss = axios.create({
 const STORE_LABELS = {
   304177: 'WhyGolf Retail (DTC)',
   342112: 'WhyGolf Wholesale',
-  325792: 'Amazon USA',
+  325792: 'Amazon FBM',
   188942: 'Manual Orders',
 };
 
@@ -451,7 +451,7 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
       const next = link.match(/<[^>]+page_info=([^>&"]+)[^>]*>;\s*rel="next"/);
       if (!next || batch.length < 250) break;
       pageInfo = next[1];
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 50));
     }
 
     let usCount = 0, intlCount = 0;
@@ -471,6 +471,7 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
 
       for (const item of o.line_items || []) {
         const name = item.title || 'Unknown';
+        if (/package.?protection|returns?|extend/i.test(name)) continue;
         if (!byProduct[name]) byProduct[name] = { units: 0, orders: 0 };
         byProduct[name].units  += item.quantity || 0;
         byProduct[name].orders += 1;
@@ -505,6 +506,89 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error('Shopify overview error:', err.response?.data || err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Shopify Returns / Package Protection ─────────────────────────────────────
+app.get('/api/shopify/returns', requireAuth, async (req, res) => {
+  try {
+    const startDate = req.query.start || monthsAgo(3);
+    const endDate   = req.query.end   || new Date().toISOString().split('T')[0];
+    const cacheKey  = `returns_${startDate}_${endDate}`;
+
+    if (shopifyCache[cacheKey] && Date.now() - shopifyCache[cacheKey].ts < CACHE_MS) {
+      return res.json({ ...shopifyCache[cacheKey].data, cached: true });
+    }
+
+    let orders = [], pageInfo = null;
+    while (true) {
+      let params;
+      if (pageInfo) {
+        params = { limit: 250, page_info: pageInfo };
+      } else {
+        params = {
+          status: 'any',
+          created_at_min: `${startDate}T00:00:00Z`,
+          created_at_max: `${endDate}T23:59:59Z`,
+          limit: 250,
+          fields: 'id,created_at,line_items,refunds,financial_status',
+        };
+      }
+      const resp = await shopify.get('/orders.json', { params });
+      const batch = resp.data.orders || [];
+      orders = orders.concat(batch);
+      const link = resp.headers['link'] || '';
+      const next = link.match(/<[^>]+page_info=([^>&"]+)[^>]*>;\s*rel="next"/);
+      if (!next || batch.length < 250) break;
+      pageInfo = next[1];
+      await new Promise(r => setTimeout(r, 50));
+    }
+
+    const PP_RE = /package.?protection|extend/i;
+    let ppOrders = 0, ppRevenue = 0;
+    const returnsByProduct = {};
+    let totalReturnedUnits = 0;
+
+    for (const order of orders) {
+      const ppItem = (order.line_items || []).find(i => PP_RE.test(i.title || ''));
+      if (ppItem) {
+        ppOrders++;
+        ppRevenue += parseFloat(ppItem.price || 0) * (ppItem.quantity || 1);
+      }
+      for (const refund of order.refunds || []) {
+        for (const ri of refund.refund_line_items || []) {
+          const name = ri.line_item?.title || 'Unknown';
+          if (PP_RE.test(name)) continue;
+          returnsByProduct[name] = (returnsByProduct[name] || 0) + ri.quantity;
+          totalReturnedUnits += ri.quantity;
+        }
+      }
+    }
+
+    const topReturns = Object.entries(returnsByProduct)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([name, qty]) => ({
+        name, quantity: qty,
+        pct: +((qty / Math.max(totalReturnedUnits, 1)) * 100).toFixed(1),
+      }));
+
+    const result = {
+      dateRange:         `${startDate} → ${endDate}`,
+      totalOrders:       orders.length,
+      packageProtection: {
+        orders:    ppOrders,
+        optInRate: +((ppOrders / Math.max(orders.length, 1)) * 100).toFixed(1),
+        revenue:   +ppRevenue.toFixed(2),
+      },
+      totalReturnedUnits,
+      topReturns,
+    };
+    shopifyCache[cacheKey] = { data: result, ts: Date.now() };
+    res.json(result);
+  } catch (err) {
+    console.error('Returns error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
 });
