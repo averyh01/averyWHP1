@@ -280,7 +280,7 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
 // ── Shopify OAuth ─────────────────────────────────────────────────────────────
 const SHOPIFY_CLIENT_ID     = process.env.SHOPIFY_CLIENT_ID;
 const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
-const SHOPIFY_SHOP          = process.env.SHOPIFY_SHOP || 'whygolf.myshopify.com';
+const SHOPIFY_SHOP          = process.env.SHOPIFY_SHOP || 'protransition.myshopify.com';
 const RAILWAY_URL           = 'https://averywgp1-production.up.railway.app';
 
 app.get('/shopify/install', (req, res) => {
