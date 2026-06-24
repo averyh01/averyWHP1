@@ -311,6 +311,87 @@ app.get('/shopify/callback', async (req, res) => {
   }
 });
 
+// ── Shopify API client ────────────────────────────────────────────────────────
+const shopify = axios.create({
+  baseURL: `https://${SHOPIFY_SHOP}/admin/api/2026-04`,
+  headers: { 'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN }
+});
+
+// Fetch international orders for Putting Thing + Wrist-X
+app.get('/api/shopify/international-orders', requireAuth, async (req, res) => {
+  try {
+    const startDate = req.query.start || monthsAgo(3);
+    const endDate   = req.query.end   || new Date().toISOString().split('T')[0];
+
+    let orders = [], pageInfo = null, page = 1;
+
+    while (true) {
+      const params = {
+        status: 'any',
+        created_at_min: `${startDate}T00:00:00Z`,
+        created_at_max: `${endDate}T23:59:59Z`,
+        limit: 250,
+        fields: 'id,name,created_at,shipping_address,line_items,total_price,fulfillment_status',
+      };
+      if (pageInfo) params.page_info = pageInfo;
+
+      const resp = await shopify.get('/orders.json', { params });
+      const batch = resp.data.orders || [];
+      orders = orders.concat(batch);
+
+      // Check for next page via Link header
+      const link = resp.headers['link'] || '';
+      const next = link.match(/<[^>]+page_info=([^>&"]+)[^>]*>;\s*rel="next"/);
+      if (!next || batch.length < 250) break;
+      pageInfo = next[1];
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    // Filter: international only (non-US) + contains Putting Thing or Wrist-X
+    const TARGET_PRODUCTS = ['putting thing', 'wrist-x', 'wristx', 'wrist x'];
+
+    const filtered = orders.filter(o => {
+      const country = o.shipping_address?.country_code || '';
+      if (country === 'US' || !country) return false;
+      return o.line_items?.some(item =>
+        TARGET_PRODUCTS.some(t => item.name?.toLowerCase().includes(t) || item.title?.toLowerCase().includes(t))
+      );
+    });
+
+    // Summarize
+    const summary = {
+      totalOrders: filtered.length,
+      dateRange: `${startDate} → ${endDate}`,
+      byCountry: {},
+      byProduct: {},
+      orders: filtered.map(o => ({
+        id:        o.name,
+        date:      o.created_at?.split('T')[0],
+        country:   o.shipping_address?.country_code,
+        total:     o.total_price,
+        status:    o.fulfillment_status || 'unfulfilled',
+        products:  o.line_items?.map(i => ({ name: i.title, qty: i.quantity })),
+      }))
+    };
+
+    for (const o of filtered) {
+      const c = o.shipping_address?.country_code || 'Unknown';
+      summary.byCountry[c] = (summary.byCountry[c] || 0) + 1;
+      for (const item of o.line_items || []) {
+        const name = item.title || item.name || 'Unknown';
+        if (TARGET_PRODUCTS.some(t => name.toLowerCase().includes(t))) {
+          summary.byProduct[name] = (summary.byProduct[name] || 0) + item.quantity;
+        }
+      }
+    }
+
+    res.json(summary);
+  } catch (err) {
+    console.error('Shopify error:', err.response?.data || err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── HyperSKU ─────────────────────────────────────────────────────────────────
 let hyperskuToken = null;
 let hyperskuTokenExpiry = 0;
