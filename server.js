@@ -74,7 +74,8 @@ function carrierLabel(code) {
 }
 
 // ── Cache (30 min, keyed by date range) ──────────────────────────────────────
-const cache = {};
+const cache        = {};  // ShipStation analytics cache
+const shopifyCache = {};  // Shopify overview cache
 const CACHE_MS = 30 * 60 * 1000;
 
 // ── Fetch one page with retry on 429 ─────────────────────────────────────────
@@ -423,6 +424,11 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
   try {
     const startDate = req.query.start || monthsAgo(3);
     const endDate   = req.query.end   || new Date().toISOString().split('T')[0];
+    const cacheKey  = `shopify_${startDate}_${endDate}`;
+
+    if (shopifyCache[cacheKey] && Date.now() - shopifyCache[cacheKey].ts < CACHE_MS) {
+      return res.json({ ...shopifyCache[cacheKey].data, cached: true });
+    }
 
     let orders = [], pageInfo = null;
     while (true) {
@@ -486,7 +492,7 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
     } catch(e) {}
     const topProductsWithImages = topProducts.map(p => ({ ...p, image: productImages[p.name] || null }));
 
-    res.json({
+    const result = {
       dateRange: `${startDate} → ${endDate}`,
       totalOrders: total,
       domestic:      { count: usCount,   pct: +((usCount/total)*100).toFixed(1) },
@@ -494,7 +500,9 @@ app.get('/api/shopify/overview', requireAuth, async (req, res) => {
       topCountries,
       topStates,
       topProducts: topProductsWithImages,
-    });
+    };
+    shopifyCache[cacheKey] = { data: result, ts: Date.now() };
+    res.json(result);
   } catch (err) {
     console.error('Shopify overview error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });

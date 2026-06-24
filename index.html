@@ -842,34 +842,60 @@
       </div>`;
     try {
       const pw = getPassword();
-      const [shopifyRes, analyticsRes] = await Promise.all([
-        fetch(`${API}/api/shopify/overview?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } }),
-        fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`,        { headers: { 'x-password': pw } }),
-      ]);
-      const shopifyData   = await shopifyRes.json();
-      const analyticsData = await analyticsRes.json();
-      if (shopifyData.error)   throw new Error(shopifyData.error);
-      if (analyticsData.error) throw new Error(analyticsData.error);
-      // Keep analytics data available for carriers tab (avoids second load)
-      if (!shipStationLoaded) {
-        carriersData = analyticsData.carrierBreakdown || [];
-        document.getElementById('totalShipments').textContent = analyticsData.totalShipments.toLocaleString();
-        document.getElementById('totalProducts').textContent  = analyticsData.productBreakdown?.length || 0;
-        document.getElementById('dateRange').textContent      = analyticsData.dateRange;
-        document.getElementById('generated').textContent      =
-          'Updated ' + new Date(analyticsData.generatedAt).toLocaleTimeString();
-        renderCarriers(analyticsData);
-        renderProducts(analyticsData);
-        shipStationLoaded = true;
-      }
-      renderOverview(shopifyData, analyticsData.storeBreakdown || []);
+
+      // Render Shopify data immediately, don't block on ShipStation
+      const shopifyRes  = await fetch(`${API}/api/shopify/overview?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } });
+      const shopifyData = await shopifyRes.json();
+      if (shopifyData.error) throw new Error(shopifyData.error);
+      renderOverview(shopifyData, null); // render now, channels pending
+
+      // Load ShipStation in background, patch in channels when ready
+      fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } })
+        .then(r => r.json())
+        .then(analyticsData => {
+          if (analyticsData.error) return;
+          if (!shipStationLoaded) {
+            carriersData = analyticsData.carrierBreakdown || [];
+            document.getElementById('totalShipments').textContent = analyticsData.totalShipments.toLocaleString();
+            document.getElementById('totalProducts').textContent  = analyticsData.productBreakdown?.length || 0;
+            document.getElementById('dateRange').textContent      = analyticsData.dateRange;
+            document.getElementById('generated').textContent      =
+              'Updated ' + new Date(analyticsData.generatedAt).toLocaleTimeString();
+            renderCarriers(analyticsData);
+            renderProducts(analyticsData);
+            shipStationLoaded = true;
+          }
+          // Patch channels section into the already-rendered 360 view
+          const channelsEl = document.getElementById('channels-section');
+          if (channelsEl) channelsEl.innerHTML = buildChannelsHTML(analyticsData.storeBreakdown || []);
+        })
+        .catch(() => {}); // non-fatal
     } catch(err) {
       document.getElementById('view-360').innerHTML =
         `<p style="color:#ef4444;padding:40px">Failed to load: ${err.message}</p>`;
     }
   }
 
-  function renderOverview(d, storeBreakdown) {
+  function buildChannelsHTML(storeBreakdown) {
+    if (!storeBreakdown || !storeBreakdown.length) return '<div style="color:#52525b;font-size:12px;padding:8px 0">Loading channel data...</div>';
+    const totalShipped = storeBreakdown.reduce((sum, s) => sum + s.count, 0) || 1;
+    const STORE_COLORS = { 304177: '#e4e4e7', 342112: '#FF4500', 325792: '#f59e0b', 188942: '#52525b' };
+    return storeBreakdown.map(s => {
+      const color = STORE_COLORS[s.storeId] || '#71717a';
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1a1a24">
+          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
+          <div style="flex:1;font-size:13px;color:#d4d4d8;font-weight:500">${s.name}</div>
+          <div style="width:80px;height:4px;background:#1a1a24;border-radius:99px;overflow:hidden;flex-shrink:0">
+            <div style="height:100%;width:${(s.count/totalShipped*100).toFixed(0)}%;background:${color};border-radius:99px"></div>
+          </div>
+          <div style="font-size:13px;font-weight:700;color:${color};width:36px;text-align:right;flex-shrink:0">${s.pct}%</div>
+          <div style="font-size:11px;color:#52525b;width:70px;text-align:right;flex-shrink:0">${s.count.toLocaleString()} shipped</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderOverview(d) {
     const maxC = d.topCountries[0]?.orders || 1;
     const maxS = d.topStates[0]?.orders || 1;
 
@@ -904,27 +930,6 @@
         </div>`;
     }).join('');
 
-    const totalShipped = storeBreakdown.reduce((sum, s) => sum + s.count, 0) || 1;
-    const storeChannels = storeBreakdown.map(s => {
-      const STORE_COLORS = {
-        304177: '#e4e4e7',   // DTC — white
-        342112: '#FF4500',   // Wholesale — orange
-        325792: '#f59e0b',   // Amazon — amber
-        188942: '#52525b',   // Manual — muted
-      };
-      const color = STORE_COLORS[s.storeId] || '#71717a';
-      return `
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1a1a24">
-          <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>
-          <div style="flex:1;font-size:13px;color:#d4d4d8;font-weight:500">${s.name}</div>
-          <div style="width:80px;height:4px;background:#1a1a24;border-radius:99px;overflow:hidden;flex-shrink:0">
-            <div style="height:100%;width:${(s.count/totalShipped*100).toFixed(0)}%;background:${color};border-radius:99px"></div>
-          </div>
-          <div style="font-size:13px;font-weight:700;color:${color};width:36px;text-align:right;flex-shrink:0">${s.pct}%</div>
-          <div style="font-size:11px;color:#52525b;width:70px;text-align:right;flex-shrink:0">${s.count.toLocaleString()} shipped</div>
-        </div>`;
-    }).join('');
-
     document.getElementById('status').style.display  = 'none';
     document.getElementById('content').style.display = 'block';
     document.getElementById('view-360').innerHTML = `
@@ -954,11 +959,10 @@
           </div>
         </div>
 
-        ${storeChannels ? `
         <div class="section-360">
           <div class="section-360-title">Order Channels · ShipStation</div>
-          ${storeChannels}
-        </div>` : ''}
+          <div id="channels-section">${buildChannelsHTML(null)}</div>
+        </div>
 
         <div class="section-360">
           <div class="section-360-title">Top Products · DTC</div>
