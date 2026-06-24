@@ -654,7 +654,9 @@
         <div class="date-filter">
           <label>Date Range:</label>
           <button class="preset-btn" onclick="applyPreset(30, this)">30 days</button>
+          <button class="preset-btn" onclick="applyPreset(60, this)">60 days</button>
           <button class="preset-btn active" onclick="applyPreset(90, this)">90 days</button>
+          <button class="preset-btn" onclick="applyYTD(this)">YTD</button>
           <div class="date-inputs">
             <span style="font-size:13px;color:#71717a">or custom:</span>
             <input type="date" id="start-date" />
@@ -829,6 +831,20 @@
     else load();
   }
 
+  function applyYTD(btn) {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentStart = new Date().getFullYear() + '-01-01';
+    currentEnd   = today();
+    document.getElementById('start-date').value = currentStart;
+    document.getElementById('end-date').value   = currentEnd;
+    shipStationLoaded = false;
+    returnsLoaded     = false;
+    if (activeTab === '360') loadOverview();
+    else if (activeTab === 'returns') loadReturns();
+    else load();
+  }
+
   function applyCustom() {
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
     currentStart = document.getElementById('start-date').value;
@@ -954,7 +970,7 @@
             <div style="height:100%;width:${(s.count/totalShipped*100).toFixed(0)}%;background:${color};border-radius:99px"></div>
           </div>
           <div style="font-size:13px;font-weight:700;color:${color};width:36px;text-align:right;flex-shrink:0">${s.pct}%</div>
-          <div style="font-size:11px;color:#52525b;width:70px;text-align:right;flex-shrink:0">${s.count.toLocaleString()} shipped</div>
+          <div style="font-size:11px;color:#52525b;text-align:right;flex-shrink:0;white-space:nowrap">${s.count.toLocaleString()} orders · ${(s.units||s.count).toLocaleString()} units</div>
         </div>`;
     }).join('');
   }

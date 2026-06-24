@@ -82,7 +82,7 @@ const CACHE_MS = 30 * 60 * 1000;
 async function fetchPage(startDate, endDate, page, retries = 0) {
   try {
     const { data } = await ss.get('/shipments', {
-      params: { shipDateStart: startDate, shipDateEnd: endDate, pageSize: 500, page }
+      params: { shipDateStart: startDate, shipDateEnd: endDate, pageSize: 500, page, includeShipmentItems: true }
     });
     return data;
   } catch (err) {
@@ -164,7 +164,12 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
 
       // Store / channel tracking
       const sid = s.advancedOptions?.storeId;
-      if (sid) stores[sid] = (stores[sid] || 0) + 1;
+      if (sid) {
+        if (!stores[sid]) stores[sid] = { count: 0, units: 0 };
+        stores[sid].count++;
+        const units = (s.shipmentItems || []).reduce((sum, i) => sum + (i.quantity || 1), 0);
+        stores[sid].units += units || 1;
+      }
 
       if (!carriers[c]) carriers[c] = {
         count: 0, totalCost: 0, services: {},
@@ -275,12 +280,13 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
       .slice(0, 30);
 
     const storeBreakdown = Object.entries(stores)
-      .sort((a, b) => b[1] - a[1])
-      .map(([id, count]) => ({
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([id, d]) => ({
         storeId: Number(id),
         name:    STORE_LABELS[Number(id)] || `Store ${id}`,
-        count,
-        pct:     +((count / total) * 100).toFixed(1),
+        count:   d.count,
+        units:   d.units,
+        pct:     +((d.count / total) * 100).toFixed(1),
       }));
 
     const result = {
