@@ -107,14 +107,9 @@
     .header-logo-wrap {
       display: flex;
       align-items: center;
-      padding: 0 28px;
+      padding: 0 24px;
     }
-    .header-brand-text {
-      font-size: 22px;
-      font-weight: 800;
-      color: #FF4500;
-      letter-spacing: -0.02em;
-    }
+    .header-logo-img { height: 32px; width: auto; display: block; }
     #generated { font-size: 12px; color: #52525b; }
 
     /* ── Body: sidebar + content ── */
@@ -565,7 +560,7 @@
       padding: 8px 0; border-bottom: 1px solid #1a1a24;
     }
     .geo-row:last-child { border-bottom: none; }
-    .geo-flag  { font-size: 16px; width: 28px; height: 18px; line-height: 18px; text-align: center; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+    .geo-flag  { font-size: 24px; width: 34px; height: 24px; line-height: 24px; text-align: center; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
     .geo-name  { flex: 1; font-size: 13px; color: #d4d4d8; font-weight: 500; }
     .geo-orders { font-size: 13px; font-weight: 700; color: #FF4500; flex-shrink: 0; }
     .geo-pct   { font-size: 11px; color: #52525b; flex-shrink: 0; width: 36px; text-align: right; }
@@ -591,7 +586,7 @@
 
   <header>
     <div class="header-logo-wrap">
-      <span class="header-brand-text">WhyGolf</span>
+      <img src="whygolf_logo.png" alt="WhyGolf" class="header-logo-img" />
     </div>
     <span id="generated">Loading...</span>
   </header>
@@ -627,6 +622,12 @@
           <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
         </svg>
         Returns
+      </button>
+      <button class="nav-item" id="nav-royalty" onclick="switchTab('royalty')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        Royalty Calculator
       </button>
       <button class="nav-item" id="nav-selections" onclick="switchTab('selections')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -687,6 +688,25 @@
 
         <!-- ── Returns tab ── -->
         <div id="view-returns" style="display:none"></div>
+
+        <!-- ── Royalty Calculator tab ── -->
+        <div id="view-royalty" style="display:none">
+          <div style="background:#0d0d10;border:1px solid #1f1f2a;border-radius:16px;padding:32px;color:#e4e4e7">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#FF4500;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+              Royalty Calculator
+              <div style="flex:1;height:1px;background:#1f1f2a"></div>
+            </div>
+            <div style="margin-bottom:28px">
+              <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Select Person</label>
+              <select id="royalty-person" style="background:#111118;border:1px solid #2d2d3d;border-radius:8px;color:#e4e4e7;font-size:14px;padding:10px 14px;width:280px;cursor:pointer;outline:none">
+                <option value="">— Choose a person —</option>
+              </select>
+            </div>
+            <div id="royalty-content" style="color:#52525b;font-size:14px">
+              Select a person above to continue.
+            </div>
+          </div>
+        </div>
 
         <!-- ── Selection Analysis tab ── -->
         <div id="view-selections" style="display:none">
@@ -773,11 +793,13 @@
     document.getElementById('view-products').style.display   = tab === 'products'   ? 'block' : 'none';
     document.getElementById('view-returns').style.display    = tab === 'returns'    ? 'block' : 'none';
     document.getElementById('view-selections').style.display = tab === 'selections' ? 'block' : 'none';
+    document.getElementById('view-royalty').style.display   = tab === 'royalty'    ? 'block' : 'none';
     document.getElementById('nav-360').classList.toggle('active',        tab === '360');
     document.getElementById('nav-carriers').classList.toggle('active',   tab === 'carriers');
     document.getElementById('nav-products').classList.toggle('active',   tab === 'products');
     document.getElementById('nav-returns').classList.toggle('active',    tab === 'returns');
     document.getElementById('nav-selections').classList.toggle('active', tab === 'selections');
+    document.getElementById('nav-royalty').classList.toggle('active',    tab === 'royalty');
     if (tab === '360') loadOverview();
     if ((tab === 'carriers' || tab === 'products') && !shipStationLoaded) load();
     if (tab === 'returns') loadReturns();
