@@ -323,23 +323,26 @@ app.get('/api/shopify/international-orders', requireAuth, async (req, res) => {
     const startDate = req.query.start || monthsAgo(3);
     const endDate   = req.query.end   || new Date().toISOString().split('T')[0];
 
-    let orders = [], pageInfo = null, page = 1;
+    let orders = [], pageInfo = null;
 
     while (true) {
-      const params = {
-        status: 'any',
-        created_at_min: `${startDate}T00:00:00Z`,
-        created_at_max: `${endDate}T23:59:59Z`,
-        limit: 250,
-        fields: 'id,name,created_at,shipping_address,line_items,total_price,fulfillment_status',
-      };
-      if (pageInfo) params.page_info = pageInfo;
+      let params;
+      if (pageInfo) {
+        params = { limit: 250, page_info: pageInfo };
+      } else {
+        params = {
+          status: 'any',
+          created_at_min: `${startDate}T00:00:00Z`,
+          created_at_max: `${endDate}T23:59:59Z`,
+          limit: 250,
+          fields: 'id,name,created_at,shipping_address,line_items,total_price,fulfillment_status',
+        };
+      }
 
       const resp = await shopify.get('/orders.json', { params });
       const batch = resp.data.orders || [];
       orders = orders.concat(batch);
 
-      // Check for next page via Link header
       const link = resp.headers['link'] || '';
       const next = link.match(/<[^>]+page_info=([^>&"]+)[^>]*>;\s*rel="next"/);
       if (!next || batch.length < 250) break;
@@ -388,6 +391,79 @@ app.get('/api/shopify/international-orders', requireAuth, async (req, res) => {
     res.json(summary);
   } catch (err) {
     console.error('Shopify error:', err.response?.data || err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Shopify 360 Overview ──────────────────────────────────────────────────────
+app.get('/api/shopify/overview', requireAuth, async (req, res) => {
+  try {
+    const startDate = req.query.start || monthsAgo(3);
+    const endDate   = req.query.end   || new Date().toISOString().split('T')[0];
+
+    let orders = [], pageInfo = null;
+    while (true) {
+      let params;
+      if (pageInfo) {
+        params = { limit: 250, page_info: pageInfo };
+      } else {
+        params = {
+          status: 'any',
+          created_at_min: `${startDate}T00:00:00Z`,
+          created_at_max: `${endDate}T23:59:59Z`,
+          limit: 250,
+          fields: 'id,created_at,shipping_address,line_items,total_price',
+        };
+      }
+      const resp = await shopify.get('/orders.json', { params });
+      const batch = resp.data.orders || [];
+      orders = orders.concat(batch);
+      const link = resp.headers['link'] || '';
+      const next = link.match(/<[^>]+page_info=([^>&"]+)[^>]*>;\s*rel="next"/);
+      if (!next || batch.length < 250) break;
+      pageInfo = next[1];
+      await new Promise(r => setTimeout(r, 300));
+    }
+
+    let usCount = 0, intlCount = 0;
+    const byCountry = {}, byState = {}, byProduct = {};
+
+    for (const o of orders) {
+      const cc = o.shipping_address?.country_code || 'Unknown';
+      const isUS = cc === 'US';
+      isUS ? usCount++ : intlCount++;
+
+      if (isUS) {
+        const state = o.shipping_address?.province_code || 'Unknown';
+        byState[state] = (byState[state] || 0) + 1;
+      } else {
+        byCountry[cc] = (byCountry[cc] || 0) + 1;
+      }
+
+      for (const item of o.line_items || []) {
+        const name = item.title || 'Unknown';
+        if (!byProduct[name]) byProduct[name] = { units: 0, orders: 0 };
+        byProduct[name].units  += item.quantity || 0;
+        byProduct[name].orders += 1;
+      }
+    }
+
+    const total = orders.length;
+    const topCountries = Object.entries(byCountry).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([c,n])=>({country:c,orders:n,pct:+((n/total)*100).toFixed(1)}));
+    const topStates    = Object.entries(byState).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([s,n])=>({state:s,orders:n,pct:+((n/total)*100).toFixed(1)}));
+    const topProducts  = Object.entries(byProduct).sort((a,b)=>b[1].orders-a[1].orders).slice(0,10).map(([name,d])=>({name,orders:d.orders,units:d.units}));
+
+    res.json({
+      dateRange: `${startDate} → ${endDate}`,
+      totalOrders: total,
+      domestic:      { count: usCount,   pct: +((usCount/total)*100).toFixed(1) },
+      international: { count: intlCount, pct: +((intlCount/total)*100).toFixed(1) },
+      topCountries,
+      topStates,
+      topProducts,
+    });
+  } catch (err) {
+    console.error('Shopify overview error:', err.response?.data || err.message);
     res.status(500).json({ error: err.message });
   }
 });
