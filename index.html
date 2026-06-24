@@ -596,6 +596,13 @@
     <!-- Sidebar -->
     <nav class="sidebar">
       <div class="sidebar-label">Navigation</div>
+      <button class="nav-item" id="nav-pnl" onclick="switchTab('pnl')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+        </svg>
+        Daily P&amp;L
+      </button>
       <button class="nav-item active" id="nav-360" onclick="switchTab('360')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
@@ -674,6 +681,20 @@
             <div class="label" id="label-secondary">Intl vs Domestic</div>
             <div class="value" id="totalProducts">—</div>
             <div class="sub" id="sub-secondary">Shopify orders</div>
+          </div>
+        </div>
+
+        <!-- ── Daily P&L tab ── -->
+        <div id="view-pnl" style="display:none">
+          <div style="background:#0d0d10;border:1px solid #1f1f2a;border-radius:16px;padding:32px;color:#e4e4e7">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#FF4500;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+              Daily P&amp;L
+              <div style="flex:1;height:1px;background:#1f1f2a"></div>
+            </div>
+            <div style="color:#52525b;font-size:14px;line-height:1.7">
+              Connect your revenue sources to build a live P&amp;L.<br>
+              <span style="color:#71717a">Shopify DTC, Wholesale, and Amazon Seller data will roll up here.</span>
+            </div>
           </div>
         </div>
 
@@ -788,12 +809,14 @@
 
   function switchTab(tab) {
     activeTab = tab;
+    document.getElementById('view-pnl').style.display        = tab === 'pnl'        ? 'block' : 'none';
     document.getElementById('view-360').style.display        = tab === '360'        ? 'block' : 'none';
     document.getElementById('view-carriers').style.display   = tab === 'carriers'   ? 'block' : 'none';
     document.getElementById('view-products').style.display   = tab === 'products'   ? 'block' : 'none';
     document.getElementById('view-returns').style.display    = tab === 'returns'    ? 'block' : 'none';
     document.getElementById('view-selections').style.display = tab === 'selections' ? 'block' : 'none';
-    document.getElementById('view-royalty').style.display   = tab === 'royalty'    ? 'block' : 'none';
+    document.getElementById('view-royalty').style.display    = tab === 'royalty'    ? 'block' : 'none';
+    document.getElementById('nav-pnl').classList.toggle('active',        tab === 'pnl');
     document.getElementById('nav-360').classList.toggle('active',        tab === '360');
     document.getElementById('nav-carriers').classList.toggle('active',   tab === 'carriers');
     document.getElementById('nav-products').classList.toggle('active',   tab === 'products');
