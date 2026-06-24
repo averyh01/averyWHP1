@@ -107,11 +107,14 @@
     .header-logo-wrap {
       display: flex;
       align-items: center;
-      background: #FF4500;
-      padding: 12px 22px;
-      margin-right: 20px;
+      padding: 0 28px;
     }
-    header .logo { height: 28px; width: auto; display: block; filter: brightness(0) invert(1); }
+    .header-brand-text {
+      font-size: 22px;
+      font-weight: 800;
+      color: #FF4500;
+      letter-spacing: -0.02em;
+    }
     header span { font-size: 12px; color: #52525b; }
 
     /* ── Body: sidebar + content ── */
@@ -562,7 +565,7 @@
       padding: 8px 0; border-bottom: 1px solid #1a1a24;
     }
     .geo-row:last-child { border-bottom: none; }
-    .geo-flag  { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
+    .geo-flag  { font-size: 16px; width: 28px; height: 18px; line-height: 18px; text-align: center; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
     .geo-name  { flex: 1; font-size: 13px; color: #d4d4d8; font-weight: 500; }
     .geo-orders { font-size: 13px; font-weight: 700; color: #FF4500; flex-shrink: 0; }
     .geo-pct   { font-size: 11px; color: #52525b; flex-shrink: 0; width: 36px; text-align: right; }
@@ -588,7 +591,7 @@
 
   <header>
     <div class="header-logo-wrap">
-      <img src="whygolf_logo.png" alt="WhyGolf" class="logo" />
+      <span class="header-brand-text">WhyGolf</span>
     </div>
     <span id="generated">Loading...</span>
   </header>
