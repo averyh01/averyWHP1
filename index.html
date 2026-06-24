@@ -596,19 +596,19 @@
     <!-- Sidebar -->
     <nav class="sidebar">
       <div class="sidebar-label">Navigation</div>
-      <button class="nav-item" id="nav-pnl" onclick="switchTab('pnl')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-          <line x1="2" y1="20" x2="22" y2="20"/>
-        </svg>
-        Daily P&amp;L
-      </button>
       <button class="nav-item active" id="nav-360" onclick="switchTab('360')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
           <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
         360° Overview
+      </button>
+      <button class="nav-item" id="nav-pnl" onclick="switchTab('pnl')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+          <line x1="2" y1="20" x2="22" y2="20"/>
+        </svg>
+        Daily P&amp;L
       </button>
       <button class="nav-item" id="nav-carriers" onclick="switchTab('carriers')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -655,7 +655,7 @@
       <div id="content" style="display:none">
 
         <!-- Date Filter (shared) -->
-        <div class="date-filter">
+        <div class="date-filter" id="shared-date-filter">
           <label>Date Range:</label>
           <button class="preset-btn active" onclick="applyPreset(30, this)">30 days</button>
           <button class="preset-btn" onclick="applyPreset(60, this)">60 days</button>
@@ -671,7 +671,7 @@
         </div>
 
         <!-- Summary cards (shared) -->
-        <div class="cards">
+        <div class="cards" id="shared-cards">
           <div class="card">
             <div class="label" id="label-primary">Total Orders</div>
             <div class="value" id="totalShipments">—</div>
@@ -809,7 +809,10 @@
 
   function switchTab(tab) {
     activeTab = tab;
-    document.getElementById('view-pnl').style.display        = tab === 'pnl'        ? 'block' : 'none';
+    const pnl = tab === 'pnl';
+    document.getElementById('shared-date-filter').style.display = pnl ? 'none' : '';
+    document.getElementById('shared-cards').style.display       = pnl ? 'none' : '';
+    document.getElementById('view-pnl').style.display        = pnl              ? 'block' : 'none';
     document.getElementById('view-360').style.display        = tab === '360'        ? 'block' : 'none';
     document.getElementById('view-carriers').style.display   = tab === 'carriers'   ? 'block' : 'none';
     document.getElementById('view-products').style.display   = tab === 'products'   ? 'block' : 'none';
