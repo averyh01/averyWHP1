@@ -277,6 +277,40 @@ app.get('/api/analytics', requireAuth, async (req, res) => {
   }
 });
 
+// ── Shopify OAuth ─────────────────────────────────────────────────────────────
+const SHOPIFY_CLIENT_ID     = process.env.SHOPIFY_CLIENT_ID;
+const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET;
+const SHOPIFY_SHOP          = process.env.SHOPIFY_SHOP || 'whygolf.myshopify.com';
+const RAILWAY_URL           = 'https://averywgp1-production.up.railway.app';
+
+app.get('/shopify/install', (req, res) => {
+  const redirectUri = `${RAILWAY_URL}/shopify/callback`;
+  const scopes = 'read_orders,read_products,read_fulfillments,write_fulfillments';
+  const installUrl = `https://${SHOPIFY_SHOP}/admin/oauth/authorize?client_id=${SHOPIFY_CLIENT_ID}&scope=${scopes}&redirect_uri=${redirectUri}`;
+  res.redirect(installUrl);
+});
+
+app.get('/shopify/callback', async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.status(400).send('Missing code');
+  try {
+    const { data } = await axios.post(`https://${SHOPIFY_SHOP}/admin/oauth/access_token`, {
+      client_id:     SHOPIFY_CLIENT_ID,
+      client_secret: SHOPIFY_CLIENT_SECRET,
+      code,
+    });
+    // Display the token so you can copy it into Railway env vars
+    res.send(`
+      <h2>Shopify Connected!</h2>
+      <p>Copy this token into Railway as <strong>SHOPIFY_ACCESS_TOKEN</strong>:</p>
+      <code style="font-size:14px;word-break:break-all">${data.access_token}</code>
+      <p>Once saved in Railway, you can close this tab.</p>
+    `);
+  } catch (err) {
+    res.status(500).send(`OAuth error: ${err.response?.data?.error_description || err.message}`);
+  }
+});
+
 // ── HyperSKU ─────────────────────────────────────────────────────────────────
 let hyperskuToken = null;
 let hyperskuTokenExpiry = 0;
