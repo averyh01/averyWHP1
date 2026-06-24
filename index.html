@@ -649,9 +649,9 @@
         <!-- Date Filter (shared) -->
         <div class="date-filter">
           <label>Date Range:</label>
-          <button class="preset-btn" onclick="applyPreset(30, this)">30 days</button>
+          <button class="preset-btn active" onclick="applyPreset(30, this)">30 days</button>
           <button class="preset-btn" onclick="applyPreset(60, this)">60 days</button>
-          <button class="preset-btn active" onclick="applyPreset(90, this)">90 days</button>
+          <button class="preset-btn" onclick="applyPreset(90, this)">90 days</button>
           <button class="preset-btn" onclick="applyYTD(this)">YTD</button>
           <div class="date-inputs">
             <span style="font-size:13px;color:#71717a">or custom:</span>
@@ -665,14 +665,14 @@
         <!-- Summary cards (shared) -->
         <div class="cards">
           <div class="card">
-            <div class="label">Total Shipments</div>
+            <div class="label" id="label-primary">Total Orders</div>
             <div class="value" id="totalShipments">—</div>
-            <div class="sub" id="dateRange">Last 3 months</div>
+            <div class="sub" id="dateRange">Last 30 days</div>
           </div>
-          <div class="card">
-            <div class="label">Products Tracked</div>
+          <div class="card" id="card-secondary">
+            <div class="label" id="label-secondary">Intl vs Domestic</div>
             <div class="value" id="totalProducts">—</div>
-            <div class="sub">By avg shipping cost</div>
+            <div class="sub" id="sub-secondary">Shopify orders</div>
           </div>
         </div>
 
@@ -793,8 +793,9 @@
     return d.toISOString().split('T')[0];
   }
 
-  let currentStart = daysAgo(90);
+  let currentStart = daysAgo(30);
   let currentEnd   = today();
+  let overviewLoaded = false;
 
   function initDateInputs() {
     document.getElementById('start-date').value = currentStart;
@@ -810,6 +811,7 @@
     document.getElementById('end-date').value   = currentEnd;
     shipStationLoaded = false;
     returnsLoaded     = false;
+    overviewLoaded    = false;
     if (activeTab === '360') loadOverview();
     else if (activeTab === 'returns') loadReturns();
     else load();
@@ -824,6 +826,7 @@
     document.getElementById('end-date').value   = currentEnd;
     shipStationLoaded = false;
     returnsLoaded     = false;
+    overviewLoaded    = false;
     if (activeTab === '360') loadOverview();
     else if (activeTab === 'returns') loadReturns();
     else load();
@@ -836,6 +839,7 @@
     if (!currentStart || !currentEnd) return;
     shipStationLoaded = false;
     returnsLoaded     = false;
+    overviewLoaded    = false;
     if (activeTab === '360') loadOverview();
     else if (activeTab === 'returns') loadReturns();
     else load();
@@ -898,6 +902,7 @@
   };
 
   async function loadOverview() {
+    if (overviewLoaded) return;
     document.getElementById('view-360').innerHTML = `
       <div style="text-align:center;padding:80px 20px;color:#52525b">
         <div style="width:32px;height:32px;border:2px solid #1f1f2a;border-top-color:#FF4500;
@@ -911,9 +916,10 @@
       const shopifyRes  = await fetch(`${API}/api/shopify/overview?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } });
       const shopifyData = await shopifyRes.json();
       if (shopifyData.error) throw new Error(shopifyData.error);
-      renderOverview(shopifyData, null); // render now, channels pending
+      overviewLoaded = true;
+      renderOverview(shopifyData);
 
-      // Load ShipStation in background — only used for Order Channels section
+      // Background: analytics for Order Channels only — non-blocking
       fetch(`${API}/api/analytics?start=${currentStart}&end=${currentEnd}`, { headers: { 'x-password': pw } })
         .then(r => r.json())
         .then(analyticsData => {
@@ -948,6 +954,15 @@
   }
 
   function renderOverview(d) {
+    // Populate summary cards with Shopify data
+    document.getElementById('label-primary').textContent   = 'Total Orders';
+    document.getElementById('label-secondary').textContent = 'International';
+    document.getElementById('sub-secondary').textContent   = 'of total DTC orders';
+    document.getElementById('totalShipments').textContent  = d.totalOrders.toLocaleString();
+    document.getElementById('totalProducts').textContent   = d.international.pct + '%';
+    document.getElementById('dateRange').textContent       = d.dateRange;
+    document.getElementById('generated').textContent       = 'Shopify · DTC';
+
     const maxC = d.topCountries[0]?.orders || 1;
     const maxS = d.topStates[0]?.orders || 1;
 
@@ -1160,10 +1175,13 @@
       const hyperCount  = intlData.totalOrders || 0;
       const grandTotal  = data.totalShipments + hyperCount;
 
-      document.getElementById('totalShipments').textContent = grandTotal.toLocaleString();
-      document.getElementById('totalProducts').textContent  = data.productBreakdown.filter(p => !PP_RE_FE.test(p.name)).length;
-      document.getElementById('dateRange').textContent      = data.dateRange;
-      document.getElementById('generated').textContent      =
+      document.getElementById('label-primary').textContent   = 'Total Shipments';
+      document.getElementById('label-secondary').textContent = 'Products Tracked';
+      document.getElementById('sub-secondary').textContent   = 'By avg shipping cost';
+      document.getElementById('totalShipments').textContent  = grandTotal.toLocaleString();
+      document.getElementById('totalProducts').textContent   = data.productBreakdown.filter(p => !PP_RE_FE.test(p.name)).length;
+      document.getElementById('dateRange').textContent       = data.dateRange;
+      document.getElementById('generated').textContent       =
         'Updated ' + new Date(data.generatedAt).toLocaleTimeString();
 
       renderCarriers(data, hyperCount);
