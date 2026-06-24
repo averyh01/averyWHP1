@@ -125,7 +125,8 @@
     .sidebar {
       width: 220px;
       flex-shrink: 0;
-      background: #27272a;
+      background: #0f0f0f;
+      border-right: 1px solid #1f1f1f;
       display: flex;
       flex-direction: column;
       padding: 20px 12px;
@@ -136,7 +137,7 @@
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: .08em;
-      color: #52525b;
+      color: #3f3f46;
       padding: 0 10px;
       margin-bottom: 6px;
     }
@@ -148,7 +149,7 @@
       border-radius: 8px;
       font-size: 14px;
       font-weight: 500;
-      color: #a1a1aa;
+      color: #71717a;
       cursor: pointer;
       border: none;
       background: transparent;
@@ -156,10 +157,10 @@
       text-align: left;
       transition: background .15s, color .15s;
     }
-    .nav-item:hover { background: #3f3f46; color: #fff; }
-    .nav-item.active { background: #3f3f46; color: #fff; }
-    .nav-item svg { flex-shrink: 0; opacity: .7; }
-    .nav-item.active svg { opacity: 1; }
+    .nav-item:hover { background: #1a1a1a; color: #e4e4e7; }
+    .nav-item.active { background: #1f1f1f; color: #fff; border: 1px solid #2a2a2a; }
+    .nav-item svg { flex-shrink: 0; opacity: .6; }
+    .nav-item.active svg { opacity: 1; color: #FF4500; }
 
     /* ── Main content area ── */
     .content-area {
@@ -497,6 +498,10 @@
       background: #1a1a24; border: 1px solid #2d2d3d; border-radius: 3px;
       font-size: 9px; font-weight: 700; color: #71717a; letter-spacing: 0.04em;
       flex-shrink: 0;
+    }
+    .state-flag-img {
+      width: 28px; height: 18px; object-fit: cover; border-radius: 3px;
+      flex-shrink: 0; display: block;
     }
 
     /* ── Returns tab ── */
@@ -967,14 +972,19 @@
         <span class="geo-pct">${c.pct}%</span>
       </div>`).join('');
 
-    const stateRows = d.topStates.map(s => `
+    const stateRows = d.topStates.map(s => {
+      const flagUrl = `https://cdn.jsdelivr.net/gh/oxguy3/flags@master/svg/us/${s.state.toLowerCase()}.svg`;
+      return `
       <div class="geo-row">
-        <span class="state-badge">${s.state}</span>
+        <img src="${flagUrl}" class="state-flag-img" alt="${s.state}"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'">
+        <span class="state-badge" style="display:none">${s.state}</span>
         <span class="geo-name">${STATE_NAMES[s.state] || s.state}</span>
         <div class="geo-bar-mini"><div class="geo-bar-mini-fill" style="width:${(s.orders/maxS*100).toFixed(0)}%"></div></div>
         <span class="geo-orders">${s.orders}</span>
         <span class="geo-pct">${s.pct}%</span>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     const productCards = d.topProducts.map(p => {
       const img = p.image
