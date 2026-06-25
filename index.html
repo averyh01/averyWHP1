@@ -865,7 +865,7 @@
     const hideHeader = tab === 'pnl' || tab === 'royalty';
     document.getElementById('shared-date-filter').style.display = hideHeader ? 'none' : '';
     document.getElementById('shared-cards').style.display       = hideHeader ? 'none' : '';
-    document.getElementById('view-pnl').style.display        = pnl              ? 'block' : 'none';
+    document.getElementById('view-pnl').style.display        = tab === 'pnl'    ? 'block' : 'none';
     document.getElementById('view-360').style.display        = tab === '360'        ? 'block' : 'none';
     document.getElementById('view-carriers').style.display   = tab === 'carriers'   ? 'block' : 'none';
     document.getElementById('view-products').style.display   = tab === 'products'   ? 'block' : 'none';
