@@ -189,6 +189,20 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Skeleton shimmer ── */
+    .skeleton {
+      background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-card-val  { height: 36px; width: 80px; margin: 8px 0 4px; }
+    .skeleton-card-sub  { height: 12px; width: 120px; }
+    .skeleton-block     { height: 180px; width: 100%; margin-bottom: 16px; }
+    .skeleton-line      { height: 14px; width: 60%; margin-bottom: 10px; }
+    .skeleton-line.short { width: 35%; }
+
     /* ── Date filter ── */
     .date-filter {
       background: #fff;
@@ -1038,6 +1052,21 @@
     document.getElementById('app').style.flexDirection = 'column';
     initDateInputs();
     document.getElementById('royalty-person').addEventListener('change', updateRoyaltyPDFBtn);
+
+    // Show content immediately with skeleton placeholders
+    document.getElementById('status').style.display  = 'none';
+    document.getElementById('content').style.display = 'block';
+    document.getElementById('totalShipments').innerHTML = '<div class="skeleton skeleton-card-val"></div>';
+    document.getElementById('totalProducts').innerHTML  = '<div class="skeleton skeleton-card-val"></div>';
+    document.getElementById('dateRange').innerHTML      = '<div class="skeleton skeleton-card-sub"></div>';
+    document.getElementById('sub-secondary').innerHTML  = '<div class="skeleton skeleton-card-sub"></div>';
+    document.getElementById('view-360').innerHTML =
+      '<div style="padding:8px 0">' +
+      '<div class="skeleton skeleton-block"></div>' +
+      '<div class="skeleton skeleton-line"></div>' +
+      '<div class="skeleton skeleton-line short"></div>' +
+      '</div>';
+
     switchTab('360');
   }
 
@@ -1162,8 +1191,6 @@
         </div>`;
     }).join('');
 
-    document.getElementById('status').style.display  = 'none';
-    document.getElementById('content').style.display = 'block';
     document.getElementById('view-360').innerHTML = `
       <div class="view-360-wrap">
         <div class="hero-split">
@@ -1310,9 +1337,6 @@
   }
 
   async function load(attempt = 1) {
-    document.getElementById('status').innerHTML = '<div class="spinner"></div>Loading data...';
-    document.getElementById('status').style.display  = 'block';
-    document.getElementById('content').style.display = 'none';
 
     try {
       const pw = getPassword();

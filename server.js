@@ -640,4 +640,30 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n✅ Server running at http://localhost:${PORT}`);
   console.log(`   Open http://localhost:${PORT} in your browser\n`);
+  warmCache();
 });
+
+function daysAgoStr(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split('T')[0];
+}
+
+async function warmCache() {
+  const today = new Date().toISOString().split('T')[0];
+  const start = daysAgoStr(30);
+  const base  = `http://localhost:${PORT}`;
+  const hdrs  = { 'x-password': PASSWORD };
+  try {
+    await Promise.all([
+      axios.get(`${base}/api/shopify/overview?start=${start}&end=${today}`,   { headers: hdrs }),
+      axios.get(`${base}/api/analytics?start=${start}&end=${today}`,          { headers: hdrs }),
+      axios.get(`${base}/api/shopify/international-orders?start=${start}&end=${today}`, { headers: hdrs }),
+    ]);
+    console.log('🔥 Cache warmed for default 30-day window');
+  } catch (e) {
+    console.log('⚠️  Cache warm failed:', e.message);
+  }
+}
+
+setInterval(warmCache, 30 * 60 * 1000);
