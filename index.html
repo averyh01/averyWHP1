@@ -677,7 +677,8 @@
         <!-- Date Filter (shared) -->
         <div class="date-filter" id="shared-date-filter">
           <label>Date Range:</label>
-          <button class="preset-btn active" onclick="applyPreset(30, this)">30 days</button>
+          <button class="preset-btn active" onclick="applyPreset(7, this)">7 days</button>
+          <button class="preset-btn" onclick="applyPreset(30, this)">30 days</button>
           <button class="preset-btn" onclick="applyPreset(60, this)">60 days</button>
           <button class="preset-btn" onclick="applyPreset(90, this)">90 days</button>
           <button class="preset-btn" onclick="applyYTD(this)">YTD</button>
@@ -695,7 +696,7 @@
           <div class="card">
             <div class="label" id="label-primary">Total Orders</div>
             <div class="value" id="totalShipments">—</div>
-            <div class="sub" id="dateRange">Last 30 days</div>
+            <div class="sub" id="dateRange">Last 7 days</div>
           </div>
           <div class="card" id="card-secondary">
             <div class="label" id="label-secondary">Intl vs Domestic</div>
@@ -894,7 +895,7 @@
     return d.toISOString().split('T')[0];
   }
 
-  let currentStart = daysAgo(30);
+  let currentStart = daysAgo(7);
   let currentEnd   = today();
   let overviewLoaded = false;
 

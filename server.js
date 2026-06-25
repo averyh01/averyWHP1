@@ -344,7 +344,8 @@ app.get('/shopify/callback', async (req, res) => {
 // ── Shopify API client ────────────────────────────────────────────────────────
 const shopify = axios.create({
   baseURL: `https://${SHOPIFY_SHOP}/admin/api/2026-04`,
-  headers: { 'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN }
+  headers: { 'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN },
+  timeout: 20000,
 });
 
 // Fetch international orders for Putting Thing + Wrist-X
@@ -651,7 +652,7 @@ function daysAgoStr(n) {
 
 async function warmCache() {
   const today = new Date().toISOString().split('T')[0];
-  const start = daysAgoStr(30);
+  const start = daysAgoStr(7);
   const base  = `http://localhost:${PORT}`;
   const hdrs  = { 'x-password': PASSWORD };
   try {
