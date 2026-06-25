@@ -744,7 +744,7 @@
               <div>
                 <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Person</label>
                 <select id="royalty-person" style="background:#111118;border:1px solid #2d2d3d;border-radius:8px;color:#e4e4e7;font-size:14px;padding:10px 14px;min-width:220px;cursor:pointer;outline:none">
-                  <option value="">— Choose a person —</option>
+                  <option value="">— Select —</option>
                 </select>
               </div>
               <div>
@@ -862,7 +862,7 @@
 
   function switchTab(tab) {
     activeTab = tab;
-    const hideHeader = tab === 'pnl' || tab === 'royalty';
+    const hideHeader = tab === 'pnl' || tab === 'royalty' || tab === 'selections';
     document.getElementById('shared-date-filter').style.display = hideHeader ? 'none' : '';
     document.getElementById('shared-cards').style.display       = hideHeader ? 'none' : '';
     document.getElementById('view-pnl').style.display        = tab === 'pnl'    ? 'block' : 'none';
