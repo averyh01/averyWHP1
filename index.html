@@ -113,6 +113,9 @@
     #generated { font-size: 12px; color: #52525b; }
     #sign-out-btn { background: none; border: 1px solid #2d2d2d; color: #71717a; font-size: 12px; padding: 5px 12px; border-radius: 6px; cursor: pointer; }
     #sign-out-btn:hover { border-color: #52525b; color: #e4e4e7; }
+    .royalty-q-btn { background:#111118; border:1px solid #2d2d3d; color:#71717a; font-size:13px; font-weight:700; padding:9px 18px; border-radius:8px; cursor:pointer; }
+    .royalty-q-btn:hover { border-color:#52525b; color:#e4e4e7; }
+    .royalty-q-btn.active { border-color:#FF4500; color:#FF4500; background:#1a0a00; }
 
     /* ── Body: sidebar + content ── */
     .app-body {
@@ -716,18 +719,40 @@
         <!-- ── Royalty Calculator tab ── -->
         <div id="view-royalty" style="display:none">
           <div style="background:#0d0d10;border:1px solid #1f1f2a;border-radius:16px;padding:32px;color:#e4e4e7">
-            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#FF4500;margin-bottom:20px;display:flex;align-items:center;gap:10px">
+            <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#FF4500;margin-bottom:24px;display:flex;align-items:center;gap:10px">
               Royalty Calculator
               <div style="flex:1;height:1px;background:#1f1f2a"></div>
             </div>
-            <div style="margin-bottom:28px">
-              <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Select Person</label>
-              <select id="royalty-person" style="background:#111118;border:1px solid #2d2d3d;border-radius:8px;color:#e4e4e7;font-size:14px;padding:10px 14px;width:280px;cursor:pointer;outline:none">
-                <option value="">— Choose a person —</option>
-              </select>
+
+            <!-- Person + Quarter selectors -->
+            <div style="display:flex;gap:24px;align-items:flex-end;margin-bottom:32px;flex-wrap:wrap">
+              <div>
+                <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Person</label>
+                <select id="royalty-person" style="background:#111118;border:1px solid #2d2d3d;border-radius:8px;color:#e4e4e7;font-size:14px;padding:10px 14px;min-width:220px;cursor:pointer;outline:none">
+                  <option value="">— Choose a person —</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Quarter</label>
+                <div style="display:flex;gap:8px">
+                  <button class="royalty-q-btn active" onclick="selectRoyaltyQuarter(this,'Q1')">Q1</button>
+                  <button class="royalty-q-btn" onclick="selectRoyaltyQuarter(this,'Q2')">Q2</button>
+                  <button class="royalty-q-btn" onclick="selectRoyaltyQuarter(this,'Q3')">Q3</button>
+                  <button class="royalty-q-btn" onclick="selectRoyaltyQuarter(this,'Q4')">Q4</button>
+                </div>
+              </div>
+              <div>
+                <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Year</label>
+                <select id="royalty-year" style="background:#111118;border:1px solid #2d2d3d;border-radius:8px;color:#e4e4e7;font-size:14px;padding:10px 14px;cursor:pointer;outline:none">
+                  <option value="2026">2026</option>
+                  <option value="2025">2025</option>
+                  <option value="2024">2024</option>
+                </select>
+              </div>
             </div>
+
             <div id="royalty-content" style="color:#52525b;font-size:14px">
-              Select a person above to continue.
+              Select a person and quarter to continue.
             </div>
           </div>
         </div>
@@ -812,9 +837,9 @@
 
   function switchTab(tab) {
     activeTab = tab;
-    const pnl = tab === 'pnl';
-    document.getElementById('shared-date-filter').style.display = pnl ? 'none' : '';
-    document.getElementById('shared-cards').style.display       = pnl ? 'none' : '';
+    const hideHeader = tab === 'pnl' || tab === 'royalty';
+    document.getElementById('shared-date-filter').style.display = hideHeader ? 'none' : '';
+    document.getElementById('shared-cards').style.display       = hideHeader ? 'none' : '';
     document.getElementById('view-pnl').style.display        = pnl              ? 'block' : 'none';
     document.getElementById('view-360').style.display        = tab === '360'        ? 'block' : 'none';
     document.getElementById('view-carriers').style.display   = tab === 'carriers'   ? 'block' : 'none';
@@ -899,6 +924,13 @@
   // ── Auth ──────────────────────────────────────────────────────────────────
   function getPassword() { return localStorage.getItem('wgp_pw'); }
   function signOut() { localStorage.removeItem('wgp_pw'); location.reload(); }
+
+  let activeRoyaltyQuarter = 'Q1';
+  function selectRoyaltyQuarter(btn, q) {
+    activeRoyaltyQuarter = q;
+    document.querySelectorAll('.royalty-q-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
 
   async function login() {
     const pw = document.getElementById('password-input').value;
@@ -1297,7 +1329,7 @@
       <div class="view-360-wrap">
         <div class="returns-hero">
           <div class="returns-stat-card">
-            <div class="returns-stat-label">Package Protection Opt-In Rate</div>
+            <div class="returns-stat-label">Package Protection Opt-In Rate <span style="font-size:11px;color:#52525b;font-weight:400">(US DTC only)</span></div>
             <div class="returns-stat-big">${d.packageProtection.optInRate}%</div>
             <div class="returns-stat-sub">
               ${d.packageProtection.orders.toLocaleString()} of ${d.totalOrders.toLocaleString()} orders opted in

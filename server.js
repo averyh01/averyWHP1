@@ -538,7 +538,7 @@ app.get('/api/shopify/returns', requireAuth, async (req, res) => {
           created_at_min: `${startDate}T00:00:00Z`,
           created_at_max: `${endDate}T23:59:59Z`,
           limit: 250,
-          fields: 'id,created_at,line_items,refunds,financial_status',
+          fields: 'id,created_at,line_items,refunds,financial_status,shipping_address',
         };
       }
       const resp = await shopify.get('/orders.json', { params });
@@ -552,11 +552,13 @@ app.get('/api/shopify/returns', requireAuth, async (req, res) => {
     }
 
     const PP_RE = /package.?protection|extend/i;
-    let ppOrders = 0, ppRevenue = 0;
+    let ppOrders = 0, ppRevenue = 0, usDtcOrders = 0;
     const returnsByProduct = {};
     let totalReturnedUnits = 0;
 
     for (const order of orders) {
+      const isUS = (order.shipping_address?.country_code || '').toUpperCase() === 'US';
+      if (isUS) usDtcOrders++;
       const ppItem = (order.line_items || []).find(i => PP_RE.test(i.title || ''));
       if (ppItem) {
         ppOrders++;
@@ -585,7 +587,8 @@ app.get('/api/shopify/returns', requireAuth, async (req, res) => {
       totalOrders:       orders.length,
       packageProtection: {
         orders:    ppOrders,
-        optInRate: +((ppOrders / Math.max(orders.length, 1)) * 100).toFixed(1),
+        optInRate: +((ppOrders / Math.max(usDtcOrders, 1)) * 100).toFixed(1),
+        usDtcOrders,
         revenue:   +ppRevenue.toFixed(2),
       },
       totalReturnedUnits,
