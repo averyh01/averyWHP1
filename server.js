@@ -345,7 +345,6 @@ app.get('/shopify/callback', async (req, res) => {
 const shopify = axios.create({
   baseURL: `https://${SHOPIFY_SHOP}/admin/api/2026-04`,
   headers: { 'X-Shopify-Access-Token': process.env.SHOPIFY_ACCESS_TOKEN },
-  timeout: 20000,
 });
 
 // Fetch international orders for Putting Thing + Wrist-X

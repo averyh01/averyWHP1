@@ -1103,6 +1103,8 @@
         })
         .catch(() => {}); // non-fatal
     } catch(err) {
+      document.getElementById('status').style.display  = 'none';
+      document.getElementById('content').style.display = 'block';
       document.getElementById('view-360').innerHTML =
         `<p style="color:#ef4444;padding:40px">Failed to load: ${err.message}</p>`;
     }
