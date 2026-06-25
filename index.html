@@ -801,8 +801,7 @@
                 <tr>
                   <th>#</th>
                   <th>Product</th>
-                  <th>Avg Rate Paid</th>
-                  <th>Avg Rate Charged</th>
+                  <th>Avg Shipping Cost</th>
                   <th>Shipments</th>
                 </tr>
               </thead>
@@ -1319,7 +1318,6 @@
             <td class="muted">${i + 1}</td>
             <td>${p.name}</td>
             <td class="cost">$${p.avgCost}</td>
-            <td><span class="shopify-pill">🔗 Shopify connected</span></td>
             <td class="muted">${p.shipments.toLocaleString()}</td>
           </tr>`;
       });
