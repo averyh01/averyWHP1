@@ -116,6 +116,9 @@
     .royalty-q-btn { background:#111118; border:1px solid #2d2d3d; color:#71717a; font-size:13px; font-weight:700; padding:9px 18px; border-radius:8px; cursor:pointer; }
     .royalty-q-btn:hover { border-color:#52525b; color:#e4e4e7; }
     .royalty-q-btn.active { border-color:#FF4500; color:#FF4500; background:#1a0a00; }
+    #royalty-retail-sales::-webkit-inner-spin-button,
+    #royalty-retail-sales::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    #royalty-retail-sales { -moz-appearance: textfield; }
 
     /* ── Body: sidebar + content ── */
     .app-body {
@@ -782,10 +785,9 @@
 
             <!-- Manual entry -->
             <div style="background:#0a0a0f;border:1px solid #2d2d3d;border-radius:12px;padding:24px;margin-bottom:24px">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:16px">Manual Entry</div>
               <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end">
                 <div>
-                  <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Retail Sales $</label>
+                  <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Retail Sales $ (For Period)</label>
                   <div style="display:flex;align-items:center;background:#111118;border:1px solid #2d2d3d;border-radius:8px;overflow:hidden">
                     <span style="padding:10px 12px;color:#52525b;font-size:14px;border-right:1px solid #2d2d3d">$</span>
                     <input type="number" id="royalty-retail-sales" placeholder="0.00" min="0" step="0.01"
