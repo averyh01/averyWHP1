@@ -705,6 +705,16 @@
           </div>
         </div>
 
+        <!-- ── Connections bar (360 only) ── -->
+        <div id="connections-bar" style="display:none;background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:14px 18px;margin-bottom:24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:13px;font-weight:600;color:#52525b;margin-right:4px">Connections</span>
+          <span style="font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:#16a34a;border-radius:99px;padding:4px 12px">✓ Shopify</span>
+          <span style="font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:#16a34a;border-radius:99px;padding:4px 12px">✓ ShipStation</span>
+          <span style="font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:#16a34a;border-radius:99px;padding:4px 12px">✓ HyperSKU</span>
+          <span style="font-size:12px;border:1px solid #e4e4e7;background:#fafafa;color:#a1a1aa;border-radius:99px;padding:4px 12px">○ Amazon</span>
+          <span style="font-size:12px;border:1px solid #e4e4e7;background:#fafafa;color:#a1a1aa;border-radius:99px;padding:4px 12px">○ Triple Whale</span>
+        </div>
+
         <!-- ── Daily P&L tab ── -->
         <div id="view-pnl" style="display:none">
           <div style="background:#0d0d10;border:1px solid #1f1f2a;border-radius:16px;padding:32px;color:#e4e4e7">
@@ -862,6 +872,7 @@
   function switchTab(tab) {
     activeTab = tab;
     const hideHeader = tab === 'pnl' || tab === 'royalty' || tab === 'selections';
+    document.getElementById('connections-bar').style.display = tab === '360' ? 'flex' : 'none';
     document.getElementById('shared-date-filter').style.display = hideHeader ? 'none' : '';
     document.getElementById('shared-cards').style.display       = hideHeader ? 'none' : '';
     document.getElementById('view-pnl').style.display        = tab === 'pnl'    ? 'block' : 'none';
@@ -1203,14 +1214,6 @@
             <span>← US</span>
             <span style="color:#3f3f46">${d.totalOrders.toLocaleString()} total orders · ${d.dateRange}</span>
             <span>International →</span>
-          </div>
-          <div style="margin-top:20px;padding-top:16px;border-top:1px solid #1f1f2a;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b">Connected</span>
-            <span style="font-size:12px;background:#111118;border:1px solid #2d2d3d;border-radius:20px;padding:3px 10px;color:#e4e4e7">✓ Shopify</span>
-            <span style="font-size:12px;background:#111118;border:1px solid #2d2d3d;border-radius:20px;padding:3px 10px;color:#e4e4e7">✓ ShipStation</span>
-            <span style="font-size:12px;background:#111118;border:1px solid #2d2d3d;border-radius:20px;padding:3px 10px;color:#e4e4e7">✓ HyperSKU</span>
-            <span style="font-size:12px;background:#111118;border:1px solid #1f1f2a;border-radius:20px;padding:3px 10px;color:#3d3d4d">○ Amazon</span>
-            <span style="font-size:12px;background:#111118;border:1px solid #1f1f2a;border-radius:20px;padding:3px 10px;color:#3d3d4d">○ Triple Whale</span>
           </div>
         </div>
 
