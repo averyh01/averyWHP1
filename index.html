@@ -780,6 +780,23 @@
               Select a person and quarter to continue.
             </div>
 
+            <!-- Manual entry -->
+            <div style="background:#0a0a0f;border:1px solid #2d2d3d;border-radius:12px;padding:24px;margin-bottom:24px">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:16px">Manual Entry</div>
+              <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end">
+                <div>
+                  <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#52525b;margin-bottom:8px">Retail Sales $</label>
+                  <div style="display:flex;align-items:center;background:#111118;border:1px solid #2d2d3d;border-radius:8px;overflow:hidden">
+                    <span style="padding:10px 12px;color:#52525b;font-size:14px;border-right:1px solid #2d2d3d">$</span>
+                    <input type="number" id="royalty-retail-sales" placeholder="0.00" min="0" step="0.01"
+                      style="background:transparent;border:none;color:#e4e4e7;font-size:14px;padding:10px 14px;width:160px;outline:none"
+                      oninput="updateRoyaltyPDFBtn()" />
+                  </div>
+                  <div style="font-size:11px;color:#3d3d4d;margin-top:6px">Wholesale / retail channel sales for the selected quarter</div>
+                </div>
+              </div>
+            </div>
+
             <div style="border-top:1px solid #1f1f2a;padding-top:24px">
               <button id="royalty-pdf-btn" onclick="downloadRoyaltyPDF()" style="background:#FF4500;color:#fff;border:none;border-radius:8px;padding:11px 24px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;opacity:0.4;pointer-events:none">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -1018,10 +1035,33 @@
     doc.setDrawColor(220, 220, 220);
     doc.line(40, 145, W - 40, 145);
 
-    // Placeholder body
+    // Sales data
+    const retailSales = parseFloat(document.getElementById('royalty-retail-sales').value) || 0;
+    const retailStr   = retailSales.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+    let y = 175;
     doc.setTextColor(80, 80, 80);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SALES SUMMARY', 40, y); y += 18;
+    doc.setDrawColor(230, 230, 230);
+    doc.line(40, y, W - 40, y); y += 16;
+
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
-    doc.text('Sales data and royalty calculation will appear here once rates are configured.', 40, 175, { maxWidth: W - 80 });
+    doc.setTextColor(50, 50, 50);
+    doc.text('Retail / Wholesale Sales', 40, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(retailStr, W - 40, y, { align: 'right' });
+    y += 14;
+
+    doc.setDrawColor(230, 230, 230);
+    doc.line(40, y + 4, W - 40, y + 4); y += 20;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(130, 130, 130);
+    doc.text('Royalty rate and calculated payout will be added once rates are configured.', 40, y, { maxWidth: W - 80 });
 
     // Footer
     doc.setFontSize(9);
